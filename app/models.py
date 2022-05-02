@@ -23,6 +23,8 @@ class User(db.Model):
     is_verified = db.Column(db.Boolean, default=False)
     is_admin = db.Column(db.Boolean, default=False)
     tests = db.relationship('Test', backref='owner', lazy='dynamic')
+    is_email_verified = db.Column(db.Boolean, default=False)
+    is_number_verified = db.Column(db.Boolean, default=False)
     
     # to add a new location to a user's history we can just call, <User >.visits.append(<Location >)
     visits = db.relationship('Location', secondary=visited, backref='wasvisitedby')
