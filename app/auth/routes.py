@@ -3,6 +3,7 @@ from app.models import User
 from flask import jsonify, make_response, request, current_app
 from functools import wraps
 import jwt
+from app import db
 
 
 def token_required(f):
@@ -80,6 +81,45 @@ def login():
     except Exception as e:
         return make_response(jsonify({
             "message": "Something went wrong2",
+            "error": str(e),
+            "data": None
+        }), 500)
+
+
+@bp.route('/signup', methods=['POST'])
+def signup():
+    """
+    Accepts an email and password in the body of the request.
+    Format should be json.
+    """
+    try:
+        user = request.json
+        # credentials were not found in body of the request as json
+        if not user:
+            return make_response(jsonify({
+                "message": "Please provide user details",
+                "data": None,
+                "error": "Bad request"
+            }), 400)
+        
+        already_exists = User.query.filter_by(email=user['email']).first()
+        if already_exists:
+            return make_response(jsonify({
+                "message": "User already exists",
+                "data": None,
+                "error": "Bad request"
+            }), 400)
+        new_user = User(email=user['email'])
+        new_user.hash_password(user['password'])
+        db.session.add(user)
+        db.session.commit()
+        return make_response(jsonify({
+            "message": "Successfully created new user",
+            "data": new_user
+        }), 201)
+    except Exception as e:
+        return make_response(jsonify({
+            "message": "Something went wrong",
             "error": str(e),
             "data": None
         }), 500)
