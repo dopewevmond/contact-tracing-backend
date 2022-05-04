@@ -1,60 +1,85 @@
 from app.auth import bp
-from flask_restful import Api, Resource, abort, reqparse, fields, marshal_with
 from app.models import User
-from flask import jsonify, make_response
-from app import db
+from flask import jsonify, make_response, request, current_app
+from functools import wraps
+import jwt
 
-api = Api(bp)
 
-user_fields =  {
-    'id': fields.Integer,
-    'first_name': fields.String,
-    'last_name': fields.String,
-    'username': fields.String,
-    'email': fields.String,
-    'gender': fields.Boolean,
-    'dob': fields.DateTime,
-    'phone_number': fields.String,
-    'is_verified': fields.Boolean,
-    'is_admin': fields.Boolean,
-}
+def token_required(f):
+    @wraps(f)
+    def decorator(*args, **kwargs):
+        token = None
 
-class SignupUserAPI(Resource):
-    def __init__(self):
-        self.reqparse = reqparse.RequestParser()
-        self.reqparse.add_argument('username', type=str, required=True, help='No username provided', location='json')
-        self.reqparse.add_argument('password', type=str, required=True, help='No password was entered', location='json')
-        super(SignupUserAPI, self).__init__()
+        if 'x-access-tokens' in request.headers:
+            token = request.headers['x-access-tokens']
+        
+        if not token:
+            return jsonify({"message": "a valid token is missing"})
 
-    def post(self):
-        args = self.reqparse.parse_args()
-        username = args['username']
-        password = args['password']
-        if username is None or password is None:
-            abort(400)
-        if User.query.filter_by(username=username).first() is not None:
-            abort(400)
-        user = User(username=username)
-        user.hash_password(password)
-        print('about to add user', username)
-        db.session.add(user)
-        db.session.commit()
-        return make_response(jsonify({"username": username}), 200)
+        try:
+            data = jwt.decode(token, current_app.config['SECRET_KEY'], algorithms=['HS256'])
+            current_user = User.query.get(data['user_id'])
+            if current_user is None:
+                return make_response(jsonify({
+                    "message": "Invalid Authentication token",
+                    "data": None,
+                    "error": "Unauthorized"
+                }), 401)
+        except:
+            return make_response(jsonify({
+                "message": "Invalid Authentication token",
+                "data": None,
+                "error": "Unauthorized"
+            }), 401)
+        return f(current_user, *args, **kwargs)
+    return decorator
 
-class UserListAPI(Resource):
-    @marshal_with(user_fields)
-    def get(self):
-        users = User.query.all()
-        return users
 
-    def post(self):
-        pass
+@bp.route('/login', methods=['POST'])
+def login():
+    """
+    Accepts a username and password in the body of the request.
+    Format should be json.
+    Regardless of whether an email or a username is being used to sign in,
+    still pass it as the value of the username key.
+    """
+    try:
+        data = request.json
+        if not data:
+            return make_response(jsonify({
+                "message": "Please provide login credentials",
+                "data": None,
+                "error": "Bad request"
+            }), 400)
+        user = User.query.filter_by(username=data['username']).first() or User.query.filter_by(email=data['username']).first()
+        if user:    
+            user_credentials = user.verify_password(data['password'])
+        if user_credentials:
+            try:
+                token = jwt.encode(
+                    {"user_id": user.id},
+                    current_app.config['SECRET_KEY'],
+                    algorithm='HS256'
+                )
+                return jsonify({
+                    "message": "Successfully fetched auth token",
+                    "data": token
+                })
+            except Exception as e:
+                return make_response(jsonify({
+                    "error": "Something went wrong1",
+                    "message": str(e)
+                }), 500)
+        return make_response(jsonify({
+            "message": "Error fetching auth token! invalid username or password",
+            "data": None,
+            "error": "Unauthorized"
+        }), 404)
 
-    def put(self):
-        pass
 
-    def delete(self):
-        pass
-
-api.add_resource(UserListAPI, '/contact-tracing/api/v1.0/users', endpoint='all_users')
-api.add_resource(SignupUserAPI, '/contact-tracing/api/v1.0/users/signup', endpoint='signup')
+    except Exception as e:
+        return make_response(jsonify({
+            "message": "Something went wrong2",
+            "error": str(e),
+            "data": None
+        }), 500)

@@ -1,12 +1,37 @@
 from . import bp
-from flask import render_template, flash, redirect, url_for, jsonify, current_app
 from ..models import User
+from flask_restful import Api, Resource, reqparse, fields, marshal_with
+from app.auth.routes import token_required
 
-@bp.route('/')
-def index():
-    a = User.query.all()
-    ht = '<ul>'
-    for user in a:
-        ht += "<li>{}, {} </li>".format(user.first_name, user.last_name)
-    ht += '</ul>'
-    return ht
+api = Api(bp)
+
+user_fields =  {
+    'id': fields.Integer,
+    'first_name': fields.String,
+    'last_name': fields.String,
+    'username': fields.String,
+    'email': fields.String,
+    'gender': fields.Boolean,
+    'dob': fields.DateTime,
+    'phone_number': fields.String,
+    'is_verified': fields.Boolean,
+    'is_admin': fields.Boolean,
+}
+
+class UserListAPI(Resource):
+    decorators = [token_required]
+    @marshal_with(user_fields)
+    def get(self, current_user):
+        users = User.query.all()
+        return users
+
+    def post(self):
+        pass
+
+    def put(self):
+        pass
+
+    def delete(self):
+        pass
+
+api.add_resource(UserListAPI, '/contact-tracing/api/v1.0/users', endpoint='all_users')
