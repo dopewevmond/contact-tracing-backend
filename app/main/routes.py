@@ -34,4 +34,4 @@ class UserListAPI(Resource):
     def delete(self):
         pass
 
-api.add_resource(UserListAPI, '/contact-tracing/api/v1.0/users', endpoint='all_users')
+api.add_resource(UserListAPI, '/api/v1.0/users', endpoint='all_users')

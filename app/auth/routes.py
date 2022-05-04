@@ -111,15 +111,15 @@ def signup():
             }), 400)
         new_user = User(email=user['email'])
         new_user.hash_password(user['password'])
-        db.session.add(user)
+        db.session.add(new_user)
         db.session.commit()
         return make_response(jsonify({
             "message": "Successfully created new user",
-            "data": new_user
+            "data": {"id": new_user.id}
         }), 201)
     except Exception as e:
         return make_response(jsonify({
-            "message": "Something went wrong",
+            "message": "Something went wrong1",
             "error": str(e),
             "data": None
         }), 500)
