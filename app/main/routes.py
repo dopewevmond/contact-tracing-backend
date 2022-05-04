@@ -1,7 +1,7 @@
 from . import bp
 from ..models import User
 from flask_restful import Api, Resource, reqparse, fields, marshal_with
-from app.auth.routes import token_required
+from app.auth.routes import token_required, admin_access_required
 
 api = Api(bp)
 
@@ -19,7 +19,7 @@ user_fields =  {
 }
 
 class UserListAPI(Resource):
-    decorators = [token_required]
+    decorators = [admin_access_required]
     @marshal_with(user_fields)
     def get(self, current_user):
         users = User.query.all()

@@ -7,6 +7,10 @@ from app import db
 
 
 def token_required(f):
+    """
+    Obtains an access token from the request header and decodes the token to get id of the user.
+    Allow the request to move to the next middleware only if the JWT is valid.
+    """
     @wraps(f)
     def decorator(*args, **kwargs):
         token = None
@@ -23,6 +27,41 @@ def token_required(f):
             if current_user is None:
                 return make_response(jsonify({
                     "message": "Invalid Authentication token",
+                    "data": None,
+                    "error": "Unauthorized"
+                }), 401)
+        except:
+            return make_response(jsonify({
+                "message": "Invalid Authentication token",
+                "data": None,
+                "error": "Unauthorized"
+            }), 401)
+        return f(current_user, *args, **kwargs)
+    return decorator
+
+
+def admin_access_required(f):
+    """
+    Obtains an access token from the request header and decodes the token to get id of the user.
+    Allow the request to move to the next middleware only if the user is an admin.
+    ie. current_user.is_admin should return True
+    """
+    @wraps(f)
+    def decorator(*args, **kwargs):
+        token = None
+
+        if 'x-access-tokens' in request.headers:
+            token = request.headers['x-access-tokens']
+        
+        if not token:
+            return jsonify({"message": "a valid token is missing"})
+
+        try:
+            data = jwt.decode(token, current_app.config['SECRET_KEY'], algorithms=['HS256'])
+            current_user = User.query.get(data['user_id'])
+            if current_user is None or not current_user.is_admin:
+                return make_response(jsonify({
+                    "message": "User does not have access rights",
                     "data": None,
                     "error": "Unauthorized"
                 }), 401)
