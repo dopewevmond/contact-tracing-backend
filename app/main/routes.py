@@ -19,8 +19,7 @@ user_fields =  {
 }
 
 class UserListAPI(Resource):
-    decorators = [token_required]
-    @marshal_with(user_fields)
+    decorators = [token_required, marshal_with(user_fields)]
     def get(self, current_user):
         users = User.query.all()
         return users
