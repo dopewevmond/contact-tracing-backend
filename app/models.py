@@ -9,6 +9,31 @@ visited = db.Table('visited',
     db.Column('date_tested', db.DateTime, default=datetime.utcnow())
 )
 
+
+# based on the implementation in Flask Mega Tutorial by Miguel Grinberg, Part VIII
+# for every entry in the `known_by` association table, the left entity is assumed to know the right entity. 
+# For instance, a representation of the users who know a <User id=3>.ie.(with an id of 3) might be
+# represented in the `known_by` association table as
+
+####################################
+##   knows_id    ##   known_id    ##
+####################################
+##       1       ##        3      ##
+##       2       ##        3      ##
+##       7       ##        3      ##
+##       9       ##        3      ##
+##      13       ##        3      ##
+####################################
+
+# a relationship can therefore be defined on the left side of the User class as `knows`
+# and a backref `known_by` can be defined to access the relationship from the right entity.
+# the above could be obtained by running <User id=3>.known_by
+
+known_by = db.Table('known_by',
+    db.Column('knows_id', db.Integer, db.ForeignKey('user.id')),
+    db.Column('known_id', db.Integer, db.ForeignKey('user.id'))
+)
+
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     first_name = db.Column(db.String(64))
@@ -26,6 +51,12 @@ class User(db.Model):
     tests = db.relationship('Test', backref='owner', lazy='dynamic')
     is_email_verified = db.Column(db.Boolean, default=False)
     is_number_verified = db.Column(db.Boolean, default=False)
+
+    knows = db.relationship(
+        'User', secondary=known_by,
+        primaryjoin=(known_by.c.knows_id == id),
+        secondaryjoin=(known_by.c.known_id == id),
+        backref=db.backref('known_by', lazy='dynamic'), lazy='dynamic')
     
     # to add a new location to a user's history we can just call, <User >.visits.append(<Location >)
     visits = db.relationship('Location', secondary=visited, backref='wasvisitedby')
