@@ -68,6 +68,19 @@ class User(db.Model):
     def verify_password(self, password):
         return pwd_context.verify(password, self.password_hash)
 
+    def is_known_by(self, user):
+        """
+        Returns True if self is known by user
+        """
+        return self in user.knows.all()
+
+    def add_contact(self, user):
+        if not user.is_known_by(self):
+            self.knows.append(user)
+
+    def remove_contact(self, user):
+        if user.is_known_by(self):
+            self.knows.remove(user)
 
 
 class TestingCenter(db.Model):

@@ -98,17 +98,19 @@ class UserAndTestCase(unittest.TestCase):
         self.assertEqual(user3.known_by.count(), 0)
         self.assertEqual(user4.known_by.count(), 0)
 
-        user1.knows.append(user2)
-        user1.knows.append(user3)
+        user1.add_contact(user2)
+        user1.add_contact(user2)
+        user1.add_contact(user3)
+        user2.add_contact(user4)
 
         self.assertEqual(user1.knows.count(), 2)
-        self.assertEqual(user2.knows.count(), 0)
+        self.assertEqual(user2.knows.count(), 1)
         self.assertEqual(user3.knows.count(), 0)
         self.assertEqual(user4.knows.count(), 0)
         self.assertEqual(user1.known_by.count(), 0)
         self.assertEqual(user2.known_by.count(), 1)
         self.assertEqual(user3.known_by.count(), 1)
-        self.assertEqual(user4.known_by.count(), 0)
+        self.assertEqual(user4.known_by.count(), 1)
     
 
 if __name__ == '__main__':
