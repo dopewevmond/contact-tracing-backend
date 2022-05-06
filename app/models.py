@@ -62,7 +62,7 @@ class User(db.Model):
     visits = db.relationship('Location', secondary=visited, backref='wasvisitedby')
 
     def hash_password(self, password):
-        self.password_hash = pwd_context.encrypt(password)
+        self.password_hash = pwd_context.hash(password)
 
     def verify_password(self, password):
         return pwd_context.verify(password, self.password_hash)
