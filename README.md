@@ -22,3 +22,8 @@ Open to suggestions and extension of the code. To contribute
 - Commit changes
 - Push to the branch
 - Create pull request
+
+#### Running tests
+- Open a terminal or PowerShell window
+- In the root directory of this project, run `.\<name-of-virtual-environment>\Scripts\activate` to activate the virtual environment.
+- Run `python ./tests.py` to run the tests.
