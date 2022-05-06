@@ -59,7 +59,8 @@ class User(db.Model):
         backref=db.backref('known_by', lazy='dynamic'), lazy='dynamic')
     
     # to add a new location to a user's history we can just call, <User >.visits.append(<Location >)
-    visits = db.relationship('Location', secondary=visited, backref='wasvisitedby')
+    # the lazy='dynamic' was added to all backrefs to allow the count() method to be called on the queries
+    visits = db.relationship('Location', secondary=visited, backref=db.backref('wasvisitedby', lazy='dynamic'), lazy='dynamic')
 
     def hash_password(self, password):
         self.password_hash = pwd_context.hash(password)
