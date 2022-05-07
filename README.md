@@ -26,4 +26,4 @@ Open to suggestions and extension of the code. To contribute
 #### Running tests
 - Open a terminal or PowerShell window
 - In the root directory of this project, run `.\<name-of-virtual-environment>\Scripts\activate` to activate the virtual environment.
-- Run `python ./tests.py` to run the tests.
+- Run `python -m unittest discover` to run the tests.
