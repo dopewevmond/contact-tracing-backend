@@ -77,10 +77,14 @@ class User(db.Model):
     def add_contact(self, user):
         if not user.is_known_by(self):
             self.knows.append(user)
+            db.session.add(self)
+            db.session.commit()
 
     def remove_contact(self, user):
         if user.is_known_by(self):
             self.knows.remove(user)
+            db.session.add(self)
+            db.session.commit()
 
 
 class TestingCenter(db.Model):
