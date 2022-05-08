@@ -86,6 +86,12 @@ class User(db.Model):
             db.session.add(self)
             db.session.commit()
 
+    def visited_locations(self):
+        return db.session.query(Location.location_name, visited.c.date_tested)\
+            .filter(Location.id == visited.c.location_id)\
+            .filter(visited.c.user_id == self.id)\
+            .order_by(visited.c.date_tested.desc())
+
 
 class TestingCenter(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -94,15 +100,23 @@ class TestingCenter(db.Model):
     constituency = db.Column(db.String(140))
     location = db.relationship('Test', backref='location', lazy='dynamic')
 
+    @classmethod
+    def search_by_region(cls, region):
+        return cls.query.filter_by(region=region)
+
 class Location(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     latitude = db.Column(db.Integer)
     longitude = db.Column(db.Integer)
     location_name = db.Column(db.String(120))
 
+    @classmethod
+    def search_by_lat_and_lon(cls, lat, lon):
+        return cls.query.filter_by(latitude=lat).filter_by(longitude=lon)
+
 class Test(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    date = db.Column(db.DateTime)
+    date = db.Column(db.DateTime, default=datetime.utcnow())
     is_positive = db.Column(db.Boolean)
     is_asymptomatic = db.Column(db.Boolean)    
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
