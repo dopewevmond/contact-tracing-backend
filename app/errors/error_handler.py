@@ -5,3 +5,8 @@ from app.errors import bp
 def internal_error(error):
     db.session.rollback()
     return {"message": str(error), "data": None, "error": "Internal server error"}, 500
+
+@bp.app_errorhandler(404)
+def internal_error(error):
+    db.session.rollback()
+    return {"message": str(error), "data": None, "error": "Not found"}, 404
