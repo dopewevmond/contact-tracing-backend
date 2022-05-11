@@ -3,6 +3,7 @@ from ..models import Location, User, Test
 from flask_restful import Api, Resource, abort, reqparse, fields, marshal_with, marshal
 from app.auth.routes import token_required, admin_access_required
 from app import db
+from datetime import datetime
 
 api = Api(bp)
 
@@ -47,7 +48,7 @@ class TestListAPI(Resource):
                 "message": "Unauthorized to access this resource",
                 "data": None,
                 "error": "Unauthorized"
-            }, 401
+            }, 401,
         tests = Test.query.filter_by(user_id = id).all()      
         deserialized = []
         for test in tests:
@@ -277,6 +278,60 @@ class LocationListAPI(Resource):
         return {"message": "Location added successfully", "data": {"id": location.id}, "error": None}, 200
 
 
+class UserAPI(Resource):
+    decorators = [token_required]
+    """
+    Put will be to edit profile. Delete method will not be allowed yet.
+    """
+    def put(self, current_user, id):
+        # if not current_user == id or current_user.is_verified:
+            # abort(401)
+        
+        user = User.query.get(id)
+        if not user:
+            abort(404)
+
+        self.reqparse = reqparse.RequestParser()
+        self.reqparse.add_argument('first_name', type=str, help='Provide a valid first name', location='json')
+        self.reqparse.add_argument('last_name', type=str, help='Provide a valid last name', location='json')
+        self.reqparse.add_argument('gender', type=str, help='Select a gender', location='json')
+        self.reqparse.add_argument('dob', type=str, help='Provide a date of birth', location='json')
+        self.reqparse.add_argument('username', type=str, help='Provide a valid username', location='json')
+        self.reqparse.add_argument('phonenumber', type=str, help='Provide a phone number', location='json')
+        args = self.reqparse.parse_args()
+
+        fname, lname, gen, dob, user_name, pnumber = args['first_name'], args['last_name'],\
+            args['gender'], args['dob'], args['username'], args['phonenumber']
+
+        try:
+            if fname:
+                user.first_name = fname
+            if lname:
+                user.last_name = lname
+            user.gender = False
+            if gen:
+                user.gender = gen.lower() == 'm'
+            if dob:
+                datetime_obj = datetime.strptime(dob, '%Y-%m-%dT%H:%M:%S.%fZ')
+                user.dob = datetime_obj
+            if user_name and not User.check_if_username_exists(user_name):
+                user.username = user_name
+            if pnumber:
+                user.phone_number = pnumber
+            db.session.add(user)
+            db.session.commit()
+            return {
+                "message": "User profile edited successfully",
+                "data": {"id": user.id},
+                "error": None
+            }, 200
+        except Exception as e:
+            return {
+                "message": "Something went wrong",
+                "error": str(e),
+                "data": None
+            }, 401
+
 
 api.add_resource(ContactListAPI, '/users/<int:id>/contacts', endpoint='contacts_list')
 api.add_resource(ContactAPI, '/users/<int:id>/contacts/<int:contact_id>', endpoint='contacts')
@@ -285,3 +340,4 @@ api.add_resource(VisitedAPI, '/users/<int:id>/visited/<int:location_id>', endpoi
 api.add_resource(SearchLocationAPI, '/locations/search', endpoint='search_locations')
 api.add_resource(LocationListAPI, '/locations/all', endpoint='locations_list')
 api.add_resource(TestListAPI, '/users/<int:id>/tests', endpoint='tests_list')
+api.add_resource(UserAPI, '/users/<int:id>/edit-profile', endpoint='edit_profile')

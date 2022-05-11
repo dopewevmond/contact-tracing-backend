@@ -91,6 +91,10 @@ class User(db.Model):
             .filter(Location.id == visited.c.location_id)\
             .filter(visited.c.user_id == self.id)\
             .order_by(visited.c.date_tested.desc())
+    
+    @classmethod
+    def check_if_username_exists(cls, username):
+        return cls.query.filter_by(username=username).count() > 0
 
 
 class TestingCenter(db.Model):
