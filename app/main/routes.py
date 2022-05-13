@@ -4,6 +4,7 @@ from flask_restful import Api, Resource, abort, reqparse, fields, marshal_with, 
 from app.auth.routes import token_required, admin_access_required
 from app import db
 from datetime import datetime
+from flask import current_app
 
 api = Api(bp)
 
@@ -18,6 +19,12 @@ user_fields =  {
     'phone_number': fields.String,
     'is_verified': fields.Boolean,
     'is_admin': fields.Boolean,
+}
+user_fields_min =  {
+    'id': fields.Integer,
+    'first_name': fields.String,
+    'last_name': fields.String,
+    'username': fields.String
 }
 visited_fields = {
     'location_name': fields.String,
@@ -284,8 +291,8 @@ class UserAPI(Resource):
     Put will be to edit profile. Delete method will not be allowed yet.
     """
     def put(self, current_user, id):
-        # if not current_user == id or current_user.is_verified:
-            # abort(401)
+        if not current_user.id == id or current_user.is_verified:
+            abort(401)
         
         user = User.query.get(id)
         if not user:
@@ -333,6 +340,20 @@ class UserAPI(Resource):
             }, 401
 
 
+class SearchUserAPI(Resource):
+    def get(self):
+        self.reqparse = reqparse.RequestParser()
+        self.reqparse.add_argument('q', type=str, required=True, help='Type in a name or username of a user to search', location='args')
+        args = self.reqparse.parse_args()
+        user_details = args['q']
+        found_users, total = User.search(user_details, 1, current_app.config['USERS_PER_PAGE'])
+        found_users = found_users.all()
+        if total > 0:
+            return {"message": "Users found", "error": None, "data": {"count": total, "users": marshal(found_users, user_fields_min)}}, 200
+        return {"message": "No users found", "error": None, "data": {"count": total, "users": []}}, 200
+
+
+
 api.add_resource(ContactListAPI, '/users/<int:id>/contacts', endpoint='contacts_list')
 api.add_resource(ContactAPI, '/users/<int:id>/contacts/<int:contact_id>', endpoint='contacts')
 api.add_resource(VisitedListAPI, '/users/<int:id>/visited', endpoint='visited_list')
@@ -341,3 +362,4 @@ api.add_resource(SearchLocationAPI, '/locations/search', endpoint='search_locati
 api.add_resource(LocationListAPI, '/locations/all', endpoint='locations_list')
 api.add_resource(TestListAPI, '/users/<int:id>/tests', endpoint='tests_list')
 api.add_resource(UserAPI, '/users/<int:id>/edit-profile', endpoint='edit_profile')
+api.add_resource(SearchUserAPI, '/users/search', endpoint='search_users')

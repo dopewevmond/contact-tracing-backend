@@ -7,4 +7,4 @@ class Config(object):
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'akldfaLKSasd-0423/'
     ELASTICSEARCH_URL = os.environ.get('ELASTICSEARCH_URL')
-    USERS_PER_PAGE = 5
+    USERS_PER_PAGE = 10
