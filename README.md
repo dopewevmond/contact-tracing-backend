@@ -13,6 +13,7 @@ A Rest API backend for a Contact Tracing App built with Flask and Flask-Restful
 - Create a `.env` file in the root directory and add the following environment variables.
     - `FLASK_ENV=development`
     - `FLASK_APP=setup.py`
+    - `ELASTICSEARCH_URL=<elastic-search-url>`
 - Run `flask run` in a terminal to start the project.
 
 #### Contributing
