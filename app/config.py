@@ -6,3 +6,4 @@ class Config(object):
         or 'sqlite:///' + os.path.join(basedir, 'app.db')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'akldfaLKSasd-0423/'
+    ELASTICSEARCH_URL = os.environ.get('ELASTICSEARCH_URL')
