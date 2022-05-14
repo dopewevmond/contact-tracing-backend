@@ -80,9 +80,10 @@ known_by = db.Table('known_by',
 )
 
 class User(SearchableMixin, db.Model):
-    __searchable__ = ['username', 'first_name', 'last_name']
+    __searchable__ = ['username', 'first_name', 'other_names', 'last_name']
     id = db.Column(db.Integer, primary_key=True)
     first_name = db.Column(db.String(64))
+    other_names = db.Column(db.String(64))
     last_name = db.Column(db.String(64))
     gender = db.Column(db.Boolean)
     dob = db.Column(db.DateTime)
