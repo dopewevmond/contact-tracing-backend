@@ -14,6 +14,7 @@ A Rest API backend for a Contact Tracing App built with Flask and Flask-Restful
     - `FLASK_ENV=development`
     - `FLASK_APP=setup.py`
     - `ELASTICSEARCH_URL=<elastic-search-url>`
+    - `AWS_S3_BUCKET_NAME=<url-for-your-aws-bucket>`
 - Run `flask run` in a terminal to start the project.
 
 #### Contributing
