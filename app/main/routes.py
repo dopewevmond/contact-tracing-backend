@@ -300,6 +300,7 @@ class UserAPI(Resource):
 
         self.reqparse = reqparse.RequestParser()
         self.reqparse.add_argument('first_name', type=str, help='Provide a valid first name', location='json')
+        self.reqparse.add_argument('other_name', type=str, help='Provide a valid middle name', location='json')
         self.reqparse.add_argument('last_name', type=str, help='Provide a valid last name', location='json')
         self.reqparse.add_argument('gender', type=str, help='Select a gender', location='json')
         self.reqparse.add_argument('dob', type=str, help='Provide a date of birth', location='json')
@@ -307,7 +308,7 @@ class UserAPI(Resource):
         self.reqparse.add_argument('phonenumber', type=str, help='Provide a phone number', location='json')
         args = self.reqparse.parse_args()
 
-        fname, lname, gen, dob, user_name, pnumber = args['first_name'], args['last_name'],\
+        fname, othname, lname, gen, dob, user_name, pnumber = args['first_name'], args['other_name'], args['last_name'],\
             args['gender'], args['dob'], args['username'], args['phonenumber']
 
         try:
@@ -315,6 +316,8 @@ class UserAPI(Resource):
                 user.first_name = fname
             if lname:
                 user.last_name = lname
+            if othname:
+                user.other_names = othname
             user.gender = False
             if gen:
                 user.gender = gen.lower() == 'm'
