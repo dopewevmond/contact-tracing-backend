@@ -54,6 +54,11 @@ visited = db.Table('visited',
     db.Column('date_tested', db.DateTime, default=datetime.utcnow())
 )
 
+verification = db.Table('verification',
+    db.Column('user_id', db.Integer, db.ForeignKey('user.id')),
+    db.Column('date', db.DateTime, default=datetime.utcnow())
+)
+
 
 # based on the implementation in Flask Mega Tutorial by Miguel Grinberg, Part VIII
 # for every entry in the `known_by` association table, the left entity is assumed to know the right entity. 
