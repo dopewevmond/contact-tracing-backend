@@ -1,8 +1,15 @@
+import os
 from . import bp
 from flask_restful import Api, Resource, abort, reqparse
 import boto3
+from werkzeug.utils import secure_filename
+from werkzeug.datastructures import FileStorage
+from flask import current_app
 
 client_location = boto3.client('location')
+client_s3 = boto3.client('s3')
+
+ALLOWED_FILETYPES = ['png', 'jpg', 'jpeg', 'gif']
 
 api = Api(bp)
 
@@ -50,5 +57,33 @@ class LocationGeocodeAPI(Resource):
         )
         return response
 
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_FILETYPES
+
+class UploadImageToS3(Resource):
+    def post(self):
+        self.reqparse = reqparse.RequestParser()
+        self.reqparse.add_argument('picture', type=FileStorage, required=True, help='Upload a valid image', location='files')
+        args = self.reqparse.parse_args()
+        picture = args['picture']
+        
+        filename = secure_filename(picture.filename)
+        if not filename or filename == '':
+            return {"error": "The file name was not uploaded", "data": None, "message": "Unable to upload file"}, 400
+        if not allowed_file(filename):
+            return {"error": "The file format is not supported", "data": None, "message": "Unable to upload file"}, 400
+        
+        client_s3.upload_fileobj(
+            picture,
+            current_app.config['AWS_S3_BUCKET_NAME'],
+            filename,
+            ExtraArgs={'ACL': 'public-read'}
+        )
+        return "uploaded"
+
+
+
 api.add_resource(SearchLocationAutoSuggest, '/locations/search/autosuggest', endpoint='autosearch_location_aws')
 api.add_resource(LocationGeocodeAPI, '/locations/search/search-text', endpoint='search_by_text')
+api.add_resource(UploadImageToS3, '/upload-image', endpoint='upload_image')
