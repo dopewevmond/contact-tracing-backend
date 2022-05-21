@@ -54,11 +54,6 @@ visited = db.Table('visited',
     db.Column('date_tested', db.DateTime, default=datetime.utcnow())
 )
 
-verification = db.Table('verification',
-    db.Column('user_id', db.Integer, db.ForeignKey('user.id')),
-    db.Column('date', db.DateTime, default=datetime.utcnow())
-)
-
 
 # based on the implementation in Flask Mega Tutorial by Miguel Grinberg, Part VIII
 # for every entry in the `known_by` association table, the left entity is assumed to know the right entity. 
@@ -115,6 +110,8 @@ class User(SearchableMixin, db.Model):
     # the lazy='dynamic' was added to all backrefs to allow the count() method to be called on the queries
     visits = db.relationship('Location', secondary=visited, backref=db.backref('wasvisitedby', lazy='dynamic'), lazy='dynamic')
 
+    verification_requests = db.relationship('Verification', backref='author', lazy='dynamic')
+
     def hash_password(self, password):
         self.password_hash = pwd_context.hash(password)
 
@@ -148,6 +145,25 @@ class User(SearchableMixin, db.Model):
     @classmethod
     def check_if_username_exists(cls, username):
         return cls.query.filter_by(username=username).count() > 0
+
+    def has_applied_for_verification(self):
+        return self.verification_requests.count() > 0
+
+    def revoke_verification_request(self):
+        if self.has_applied_for_verification():
+            self.verification_requests.delete()
+            db.session.commit()
+
+    def apply_for_verification(self):
+        if not self.has_applied_for_verification():
+            ver = Verification(user_id=self.id)
+            db.session.add(ver)
+            db.session.commit()
+
+
+class Verification(db.Model):
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
+    date = db.Column(db.DateTime, default=datetime.utcnow())
 
 
 class TestingCenter(SearchableMixin, db.Model):
