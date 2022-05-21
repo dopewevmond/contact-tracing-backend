@@ -98,7 +98,7 @@ class User(SearchableMixin, db.Model):
     tests = db.relationship('Test', backref='owner', lazy='dynamic')
     is_email_verified = db.Column(db.Boolean, default=False)
     is_number_verified = db.Column(db.Boolean, default=False)
-    id_ver_status = db.Column(db.String(3), default="not") # 3 states, not, ver, pen for not_verified, verified and pending
+    id_being_verified = db.Column(db.Boolean(), default=False)
 
     knows = db.relationship(
         'User', secondary=known_by,
