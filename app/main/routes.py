@@ -1,5 +1,5 @@
 from . import bp
-from ..models import Location, User, Test
+from ..models import Location, TestingCenter, User, Test
 from flask_restful import Api, Resource, abort, reqparse, fields, marshal_with, marshal
 from app.auth.routes import token_required, admin_access_required
 from app import db
@@ -41,6 +41,12 @@ test_fields = {
     'id': fields.Integer,
     'date': fields.DateTime,
     'location': fields.String
+}
+testing_center_fields = {
+    'id': fields.Integer,
+    'name': fields.String,
+    'region': fields.String,
+    'constituency': fields.String
 }
 
 class TestListAPI(Resource):
@@ -355,6 +361,18 @@ class SearchUserAPI(Resource):
             return {"message": "Users found", "error": None, "data": {"count": total, "users": marshal(found_users, user_fields_min)}}, 200
         return {"message": "No users found", "error": None, "data": {"count": total, "users": []}}, 200
 
+class SearchTestingCenterAPI(Resource):
+    def get(self):
+        self.reqparse = reqparse.RequestParser()
+        self.reqparse.add_argument('q', type=str, required=True, help='Type in the name of the testing center to search', location='args')
+        args = self.reqparse.parse_args()
+        testing_center_details = args['q']
+        found_testing_centers, total = TestingCenter.search(testing_center_details, 1, current_app.config['USERS_PER_PAGE'])
+        found_testing_centers = found_testing_centers.all()
+        if total > 0:
+            return {"message": "Testing centers found", "error": None, "data": {"count": total, "testing_centers": marshal(found_testing_centers, testing_center_fields)}}, 200
+        return {"message": "No testing centers found", "error": None, "data": {"count": total, "testing_centers": []}}, 200
+
 
 
 api.add_resource(ContactListAPI, '/users/<int:id>/contacts', endpoint='contacts_list')
@@ -366,3 +384,4 @@ api.add_resource(LocationListAPI, '/locations/all', endpoint='locations_list')
 api.add_resource(TestListAPI, '/users/<int:id>/tests', endpoint='tests_list')
 api.add_resource(UserAPI, '/users/<int:id>/edit-profile', endpoint='edit_profile')
 api.add_resource(SearchUserAPI, '/users/search', endpoint='search_users')
+api.add_resource(SearchTestingCenterAPI, '/testing-centers/search', endpoint='search_testing_centers')

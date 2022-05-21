@@ -144,7 +144,8 @@ class User(SearchableMixin, db.Model):
         return cls.query.filter_by(username=username).count() > 0
 
 
-class TestingCenter(db.Model):
+class TestingCenter(SearchableMixin, db.Model):
+    __searchable__ = ['name', 'region', 'constituency']
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(140))
     region = db.Column(db.String(3))
