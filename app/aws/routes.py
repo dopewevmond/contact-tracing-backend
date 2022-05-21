@@ -5,6 +5,9 @@ import boto3
 from werkzeug.utils import secure_filename
 from werkzeug.datastructures import FileStorage
 from flask import current_app
+from app import db
+from botocore.exceptions import ClientError
+from app.auth.routes import token_required
 
 client_location = boto3.client('location')
 client_s3 = boto3.client('s3')
@@ -62,25 +65,33 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_FILETYPES
 
 class UploadImageToS3(Resource):
-    def post(self):
+    decorators = [token_required]
+
+    def post(self, current_user):
         self.reqparse = reqparse.RequestParser()
         self.reqparse.add_argument('picture', type=FileStorage, required=True, help='Upload a valid image', location='files')
         args = self.reqparse.parse_args()
         picture = args['picture']
         
-        filename = secure_filename(picture.filename)
+        filename = secure_filename(current_user.username + '.' + picture.filename.rsplit('.', 1)[1].lower())
+        print(filename)
         if not filename or filename == '':
             return {"error": "The file name was not uploaded", "data": None, "message": "Unable to upload file"}, 400
         if not allowed_file(filename):
             return {"error": "The file format is not supported", "data": None, "message": "Unable to upload file"}, 400
         
-        client_s3.upload_fileobj(
-            picture,
-            current_app.config['AWS_S3_BUCKET_NAME'],
-            filename,
-            ExtraArgs={'ACL': 'public-read'}
-        )
-        return "uploaded"
+        try:
+            client_s3.upload_fileobj(
+                picture,
+                current_app.config['AWS_S3_BUCKET_NAME'],
+                filename,
+                ExtraArgs={'ACL': 'public-read'}
+            )
+            current_user.apply_for_verification()
+            return {"error": None, "data": {"id": current_user.id}, "message": "File uploaded successfully"}, 201
+            
+        except ClientError as e:
+            return {"error": "Something went wrong, please try again", "data": None, "message": "Unable to upload file"}, 400
 
 
 
