@@ -21,10 +21,12 @@ def create_app(config_class=Config):
     from app.auth import bp as auth_bp
     from app.errors import bp as errors_bp
     from app.admin import bp as admin_bp
+    from app.aws import bp as aws_bp
 
     app.register_blueprint(errors_bp)
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(admin_bp)
+    app.register_blueprint(aws_bp)
 
     return app
