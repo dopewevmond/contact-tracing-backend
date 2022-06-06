@@ -293,10 +293,25 @@ class LocationListAPI(Resource):
 
 class UserAPI(Resource):
     decorators = [token_required]
-    """
-    Put will be to edit profile. Delete method will not be allowed yet.
-    """
+    def get(self, current_user, id):
+        """
+        Return all user information.
+        Could be used in say a GET request to `edit user profile` to populate...
+        ... the form with the existing data before the user makes changes
+        """
+        if not current_user.id == id:
+            abort(401)
+        
+        user = User.query.get(id)
+        if not user:
+            abort(404)
+        return {"message": "User found", "error": None, "data": marshal(user, user_fields)}
+
+    
     def put(self, current_user, id):
+        """
+        Put will be to edit profile. Delete method will not be allowed yet.
+        """
         if not current_user.id == id or current_user.is_verified:
             abort(401)
         
