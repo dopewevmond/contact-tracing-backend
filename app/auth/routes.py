@@ -19,7 +19,7 @@ def token_required(f):
             token = request.headers['x-access-tokens']
         
         if not token:
-            return jsonify({"message": "a valid token is missing"})
+            return {"message": "a valid token is missing"}, 401
 
         try:
             data = jwt.decode(token, current_app.config['SECRET_KEY'], algorithms=['HS256'])
@@ -54,7 +54,7 @@ def admin_access_required(f):
             token = request.headers['x-access-tokens']
         
         if not token:
-            return jsonify({"message": "a valid token is missing"})
+            return {"message": "a valid token is missing"}, 401
 
         try:
             data = jwt.decode(token, current_app.config['SECRET_KEY'], algorithms=['HS256'])
