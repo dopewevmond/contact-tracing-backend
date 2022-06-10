@@ -1,0 +1,45 @@
+Adds a new user to the contacts of a user with id of {id}
+  Cannot be accessed by a user with a different id than specified in the params. User needs to be logged in (have a valid JWT).
+    ---
+    parameters:
+      - name: id
+        in: path
+        type: integer
+        required: true
+      - name: contact_id
+        in: body
+        type: integer
+        required: true
+        example: 1
+    responses:
+      200:
+        description: Returns the id of the user that was just added to close contacts
+        schema:
+          type: object
+          properties:
+            message:
+              type: "string"
+              example: "Added contact successfully"
+            data:
+              type: object
+              properties:
+                id:
+                  type: "integer"
+                  example: 1
+            error:
+              type: null
+              example: null
+      401:
+        description: Unauthorized user or authorized user trying to access location of other users
+        schema:
+          type: object
+          properties:
+            message:
+              type: "string"
+              example: "Unauthorized to access this resource"
+            data:
+              type: "null"
+              example: null
+            error:
+              type: "string"
+              example: "Unauthorized"

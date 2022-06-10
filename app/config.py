@@ -12,5 +12,6 @@ class Config(object):
     SWAGGER = {
         'title': 'Contact Tracing API',
         'doc_dir': os.path.join(basedir, 'docs'),
-        'description': 'Documentation for contact tracing REST API'
+        'description': 'Documentation for contact tracing REST API',
+        'version': '1.0.0'
     }

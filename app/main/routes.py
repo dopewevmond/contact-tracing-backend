@@ -95,9 +95,6 @@ class ContactListAPI(Resource):
     decorators = [token_required]    
 
     def get(self, current_user, id):
-        """
-        Retrieves all contacts of a user with id == params:id. Can be accessed only by owner of resource.
-        """
         if not current_user.id == id:
             return {
                 "message": "Unauthorized to access this resource",
@@ -112,9 +109,6 @@ class ContactListAPI(Resource):
 
 
     def post(self, current_user, id):
-        """
-        Allows current user to add another user with id of `contact_id` in request body to their close contacts.ie. 'know' them. Can be accessed only by owner of resource.
-        """
         self.reqparse = reqparse.RequestParser()
         self.reqparse.add_argument('contact_id', type=int, help='ID of user to add was not found', location='json')
         args = self.reqparse.parse_args()
