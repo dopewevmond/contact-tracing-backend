@@ -77,6 +77,7 @@ Delete a user with id {contact_id} from the contacts of a user with id of {id}
           date_tested:
             type: "string"
             example: "2022-06-09 21:53:20.001234"
+      # Error object model
       ErrorObject:
         type: object
         properties:
@@ -87,6 +88,22 @@ Delete a user with id {contact_id} from the contacts of a user with id of {id}
             type: string
           message:
             type: string
+      # Location object model
+      Location:
+        type: object
+        properties:
+          id:
+            type: integer
+            example: 1
+          latitude:
+            type: float
+            example: 5.5536
+          longitude:
+            type: float
+            example: 0.2006
+          location_name:
+            type: string
+            example: National Theatre
     responses:
       200:
         description: Contact was removed successfully

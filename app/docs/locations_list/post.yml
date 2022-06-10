@@ -1,0 +1,59 @@
+Allows the user to add a new location to the database
+  Note that this is different from adding to a user's history.
+  Cannot be accessed by a user with a different id than specified in the params. User needs to be logged in (have a valid JWT).
+    ---
+    consumes:
+      - "application/json"
+    produces:
+    - "application/json"
+    security:
+    - APIKeyHeader: ['x-access-tokens']
+    parameters:
+      - name: body
+        in: body
+        type: object
+        properties:
+          lat:
+            type: string
+            example: "5.5536"
+          lon:
+            type: string
+            example: "0.2006"
+          name:
+            type: string
+            example: "National Theatre"
+        required: true
+        description: An object in the request body which contains the details of the location to add to the database.
+    responses:
+      200:
+        description: "Returns the id of the location that was just added to the database.\n
+        This id can then be used to add this location to a user's history by calling the `/users/{id}/visited` with a `POST` request."
+        schema:
+          type: object
+          properties:
+            message:
+              type: "string"
+              example: "Added contact successfully"
+            data:
+              type: object
+              properties:
+                id:
+                  type: "integer"
+                  example: 1
+            error:
+              type: null
+              example: null
+      401:
+        description: Unauthorized user trying to insert a location into the database.
+        schema:
+          type: object
+          properties:
+            message:
+              type: "string"
+              example: "Unauthorized to perform this operation."
+            data:
+              type: "null"
+              example: null
+            error:
+              type: "string"
+              example: "Unauthorized"

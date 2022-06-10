@@ -246,28 +246,26 @@ class LocationListAPI(Resource):
 
     @token_required
     def post(self, current_user):
-        """
-        Allows an authenticate user to add a new location to the database.\n
-        ::params.\n
-        \tlat: latitude of location to add\n 
-        \tlon: longitude of location to add\n
-        \tname: name of location to add
-        """
         self.reqparse = reqparse.RequestParser()
-        self.reqparse.add_argument('lat', type=float, required=True, help='Latitude of location not provided', location='json')
-        self.reqparse.add_argument('lon', type=float, required=True, help='Longitude of location not provided', location='json')
+        self.reqparse.add_argument('lat', type=str, required=True, help='Latitude of location not provided', location='json')
+        self.reqparse.add_argument('lon', type=str, required=True, help='Longitude of location not provided', location='json')
         self.reqparse.add_argument('name', type=str, required=True, help='Name of location not provided', location='json')
         args = self.reqparse.parse_args()
         if not args['lat'] or not args['lon'] or not args['name']:
             abort(400)
-
-        lat, lon, name = args['lat'], args['lon'], args['name']
-        if Location.search_by_lat_and_lon(lat, lon).count() > 0:
-            return {"message": "Location is already in database", "error": "Bad request", "data": None}, 400
-
-        location = Location(latitude=lat, longitude=lon, location_name=name)
-        db.session.add(location)
-        db.session.commit()
+        try:
+            lat, lon, name = float(args['lat']), float(args['lon']), args['name']
+            if Location.search_by_lat_and_lon(lat, lon).count() > 0:
+                return {"message": "Location is already in database", "error": "Bad request", "data": None}, 400
+            location = Location(latitude=lat, longitude=lon, location_name=name)
+            db.session.add(location)
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            print(e)
+            abort(400)
+        finally:
+            db.session.close()
         return {"message": "Location added successfully", "data": {"id": location.id}, "error": None}, 200
 
 
