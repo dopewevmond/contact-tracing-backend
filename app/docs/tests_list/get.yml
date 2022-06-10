@@ -8,19 +8,6 @@ Get all the tests carried out by a user with id of {id}
     - "application/json"
     security:
     - APIKeyHeader: ['x-access-token']
-    definitions:
-      Test:
-        type: object
-        properties:
-          id:
-            type: "integer"
-            format: "int64"
-          date:
-            type: "string"
-            example: "2022-06-09 21:53:20.001234"
-          location:
-            type: "string"
-            example: "Ridge Hospital"
     responses:
       200:
         description: A list of tests carried out by a user

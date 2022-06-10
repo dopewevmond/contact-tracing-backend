@@ -18,6 +18,7 @@ Delete a user with id {contact_id} from the contacts of a user with id of {id}
             example: 1
         required: true
     definitions:
+      # Test model
       Test:
         type: object
         properties:
@@ -30,6 +31,50 @@ Delete a user with id {contact_id} from the contacts of a user with id of {id}
           location:
             type: "string"
             example: "Ridge Hospital"
+      # User model
+      User:
+        type: object
+        properties:
+          id:
+            type: "integer"
+            format: "int64"
+          first_name:
+            type: "string"
+            example: "John"
+          last_name:
+            type: "string"
+            example: "Doe"
+          username:
+            type: "string"
+            example: "johnthedoe"
+          email:
+            type: "string"
+            example: "John"
+          gender:
+            type: "boolean"
+            example: "true"
+          dob:
+            type: "string"
+            example: "2022-06-09 21:53:20.001234"
+          phone_number:
+            type: "string"
+            example: "233-457-2345"
+          is_verified:
+            type: "boolean"
+            example: "false"
+          is_admin:
+            type: "boolean"
+            example: "false"
+      # Visited locations model
+      VisitedLocation:
+        type: object
+        properties:
+          location_name:
+            type: "string"
+            example: "Bloombar"
+          date_tested:
+            type: "string"
+            example: "2022-06-09 21:53:20.001234"
     responses:
       200:
         description: Contact was removed successfully

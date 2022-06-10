@@ -7,17 +7,7 @@ Get all the visited locations and the date visited of a user with id of {id}
     produces:
     - "application/json"
     security:
-    - APIKeyHeader: ['x-access-token']
-    definitions:
-      VisitedLocation:
-        type: object
-        properties:
-          location_name:
-            type: "string"
-            example: "Bloombar"
-          date_tested:
-            type: "string"
-            example: "2022-06-09 21:53:20.001234"
+    - APIKeyHeader: ['x-access-token']      
     responses:
       200:
         description: A list of contacts of a user
