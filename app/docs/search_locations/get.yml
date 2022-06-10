@@ -1,0 +1,54 @@
+Check if a location exists in the database.
+  The AWS location is used in this API to allow users to search locations and to access geocoding features.
+  If a user visited a location called say `Area 51` and they wanted to add it to their location history, they will first search with AWS Location API to get the geocoordinates of `Area 51`.
+  They can then check with the coordinates of `Area 51` if it exists in the database on this route.
+    ---
+    consumes:
+      - "application/json"
+    produces:
+    - "application/json"
+    security:
+    - APIKeyHeader: ['x-access-tokens']
+    parameters:
+      - name: lat
+        in: query
+        type: string
+        required: true
+        description: Latitude of location to search for.
+      - name: lon
+        in: query
+        type: string
+        required: true
+        description: Longitude of location to search for.
+    responses:
+      200:
+        description: Location found.
+        schema:
+          type: object
+          properties:
+            message:
+              type: "string"
+              example: "Location found"
+            data:
+              type: object
+              properties:
+                id:
+                  type: integer
+                  example: 1
+            error:
+              type: null
+              example: null
+      404:
+        description: Location not found
+        schema:
+          type: object
+          properties:
+            message:
+              type: "string"
+              example: "Location not found."
+            data:
+              type: "null"
+              example: null
+            error:
+              type: "string"
+              example: "Not found"

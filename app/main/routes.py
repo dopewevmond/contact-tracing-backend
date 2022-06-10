@@ -224,20 +224,16 @@ class VisitedAPI(Resource):
 
 
 class SearchLocationAPI(Resource):
-    """
-    Search for a location with its lat (latitude) and lon (longitude) which are required in the querystring.
-    Returns: id of found location in response data["id"] if successful, 404 if not found.
-    """
     def get(self):
         self.reqparse = reqparse.RequestParser()
-        self.reqparse.add_argument('lat', type=float, required=True, help='latitude of location to search not provided', location='args')
-        self.reqparse.add_argument('lon', type=float, required=True, help='longitude of location to search not provided', location='args')
+        self.reqparse.add_argument('lat', type=str, required=True, help='latitude of location to search not provided', location='args')
+        self.reqparse.add_argument('lon', type=str, required=True, help='longitude of location to search not provided', location='args')
         args = self.reqparse.parse_args()
         if not args['lat'] or not args['lon']:
             abort(400)
         
         latitude, longitude = args['lat'], args['lon']
-        location = Location.query.filter_by(longitude=longitude).filter_by(latitude=latitude).first()
+        location = Location.query.filter_by(longitude=float(longitude)).filter_by(latitude=float(latitude)).first()
         if location is None:
             return {"message": "Location not found", "data": None, "error": "Not found"}, 404
         return {"message": "Location found", "data": {"id": location.id}, "error": None}, 200
