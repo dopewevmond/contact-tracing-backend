@@ -14,15 +14,11 @@ Delete a user with id {contact_id} from the contacts of a user with id of {id}
         type: integer
         required: true
         description: ID of the user who wants to delete someone from their contact list.
-      - name: body
-        in: body
-        type: object
-        properties:
-          contact_id:
-            type: integer
-            example: 1
+      - name: contact_id
+        in: path
+        type: integer
         required: true
-        description: An object in the request body which contains the ID of the contact to be deleted from the contact list.
+        description: ID of the contact to be deleted from a user's contact list.
     definitions:
       # Test model
       Test:
