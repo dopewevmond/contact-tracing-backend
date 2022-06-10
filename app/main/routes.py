@@ -159,7 +159,7 @@ class ContactAPI(Resource):
         current_user.knows.remove(user_to_remove)
         db.session.add(current_user)
         db.session.commit()
-        return {"message": "Removed contact successfully", "error": None, "data": {"id": contact_id}}, 200
+        return {"message": "Removed contact successfully", "error": None, "data": None}, 200
 
 
 class VisitedListAPI(Resource):
@@ -378,7 +378,7 @@ class SearchTestingCenterAPI(Resource):
 
 
 api.add_resource(ContactListAPI, '/users/<int:id>/contacts', endpoint='contacts_list')
-api.add_resource(ContactAPI, '/users/<int:id>/contacts/<int:contact_id>', endpoint='contacts')
+api.add_resource(ContactAPI, '/users/<int:id>/contacts/<int:contact_id>', endpoint='contact')
 api.add_resource(VisitedListAPI, '/users/<int:id>/visited', endpoint='visited_list')
 api.add_resource(VisitedAPI, '/users/<int:id>/visited/<int:location_id>', endpoint='visited')
 api.add_resource(SearchLocationAPI, '/locations/search-by-lat-lon', endpoint='search_locations')

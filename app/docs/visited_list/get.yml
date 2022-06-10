@@ -1,0 +1,40 @@
+Get all the visited locations and the date visited of a user with id of {id}
+  Cannot be accessed by a user with a different id than specified in the parameters. User needs to be logged in (have a valid JWT).
+  Therefore to get all the visited locations of a user <User 1> with id of 1, a GET request can be sent to `/users/1/visited` by <User 1>
+    ---
+    parameters:
+      - name: id
+        in: path
+        type: integer
+        required: true
+    definitions:
+      VisitedLocation:
+        type: object
+        properties:
+          location_name:
+            type: "string"
+            example: "Bloombar"
+          date_tested:
+            type: "string"
+            example: "2022-06-09 21:53:20.001234"
+    responses:
+      200:
+        description: A list of contacts of a user
+        schema:
+          type: "array"
+          items:
+            $ref: "#/definitions/VisitedLocation"
+      401:
+        description: Unauthorized user or authorized user trying to access location of other users
+        schema:
+          type: object
+          properties:
+            message:
+              type: "string"
+              example: "Unauthorized to access this resource"
+            data:
+              type: "null"
+              example: null
+            error:
+              type: "string"
+              example: "Unauthorized"

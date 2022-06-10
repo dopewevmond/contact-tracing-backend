@@ -1,3 +1,5 @@
 venv
 *.pyc
 *.env
+# ignore my documentation playground
+app/docs/dummy
