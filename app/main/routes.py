@@ -177,9 +177,6 @@ class VisitedListAPI(Resource):
         return marshal(visited_locations, visited_fields), 200
 
     def post(self, current_user, id):
-        """
-        Allows current user to add another location with id of `location_id` in request body to their visited(location history).ie. 'know' them.
-        """
         self.reqparse = reqparse.RequestParser()
         self.reqparse.add_argument('location_id', type=int, required=True, help='ID of location to add', location='json')
         args = self.reqparse.parse_args()
