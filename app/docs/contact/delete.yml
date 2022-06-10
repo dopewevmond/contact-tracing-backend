@@ -9,6 +9,11 @@ Delete a user with id {contact_id} from the contacts of a user with id of {id}
     security:
     - APIKeyHeader: ['x-access-tokens']
     parameters:
+      - name: id
+        in: path
+        type: integer
+        required: true
+        description: ID of the user whose contacts are being accessed
       - name: body
         in: body
         type: object
@@ -17,6 +22,7 @@ Delete a user with id {contact_id} from the contacts of a user with id of {id}
             type: integer
             example: 1
         required: true
+        description: An object in the request body which contains the ID of the contact to be deleted from the contact list
     definitions:
       # Test model
       Test:
