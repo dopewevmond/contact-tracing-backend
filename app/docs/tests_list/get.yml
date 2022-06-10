@@ -1,6 +1,6 @@
 Get all the tests carried out by a user with id of {id}
   Cannot be accessed by a user with a different id than specified in the parameters. User needs to be logged in (have a valid JWT).
-  Therefore to get all the tests of a user with id of 1, a GET request can be sent to /users/1/tests
+  Therefore to get all the tests of a user <User 1> with id of 1, a GET request can be sent to `/users/1/tests` by <User 1>
     ---
     parameters:
       - name: id

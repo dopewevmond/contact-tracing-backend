@@ -1,7 +1,7 @@
 Get all the contacts of a user with id of {id}
   Cannot be accessed by a user with a different id than specified in the parameters. User needs to be logged in (have a valid JWT).
   The gender field is returned as a boolean such that a male represented by true and a female is represented by false.
-  Therefore to get all the contacts of a user with id of 1, a GET request can be sent to /users/1/contacts
+  Therefore to get all the contacts of a user <User 1> with id of 1, a GET request can be sent to `/users/1/contacts` by <User 1>
     ---
     parameters:
       - name: id
