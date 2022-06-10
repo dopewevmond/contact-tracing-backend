@@ -8,7 +8,9 @@ from flasgger import Swagger
 
 db = SQLAlchemy()
 migrate = Migrate()
-swagger = Swagger(parse=True)
+
+SWAGGER_TEMPLATE = {"securityDefinitions": {"APIKeyHeader": {"type": "apiKey", "name": "x-access-token", "in": "header"}}}
+swagger = Swagger(template=SWAGGER_TEMPLATE)
 
 def create_app(config_class=Config):
     app = Flask(__name__)
@@ -25,11 +27,13 @@ def create_app(config_class=Config):
     from app.errors import bp as errors_bp
     from app.admin import bp as admin_bp
     from app.aws import bp as aws_bp
+    from app.dummy import bp as dummy_bp
 
     app.register_blueprint(errors_bp)
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(admin_bp)
     app.register_blueprint(aws_bp)
+    app.register_blueprint(dummy_bp)
 
     return app

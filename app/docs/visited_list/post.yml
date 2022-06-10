@@ -1,30 +1,31 @@
-Adds a new user to the contacts of a user with id of {id}
+Adds a new location to the location history of a user with id of {id}
   Cannot be accessed by a user with a different id than specified in the params. User needs to be logged in (have a valid JWT).
     ---
+    parameters:
+      - name: body
+        in: body
+        type: object
+        description: location_id - id of location where the user visited in the database
+        properties:
+          location_id:
+            type: integer
+            example: 1
+        required: true
     consumes:
       - "application/json"
     produces:
     - "application/json"
     security:
     - APIKeyHeader: ['x-access-token']
-    parameters:
-      - name: body
-        in: body
-        type: object
-        properties:
-          contact_id:
-            type: integer
-            example: 1
-        required: true
     responses:
       200:
-        description: Returns the id of the user that was just added to close contacts
+        description: Returns the id of the location that was just added to location history
         schema:
           type: object
           properties:
             message:
               type: "string"
-              example: "Added contact successfully"
+              example: "Added location successfully"
             data:
               type: object
               properties:
@@ -43,7 +44,7 @@ Adds a new user to the contacts of a user with id of {id}
               type: "string"
               example: "Unauthorized to access this resource"
             data:
-              type: "null"
+              type: null
               example: null
             error:
               type: "string"

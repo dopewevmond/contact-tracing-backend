@@ -1,25 +1,31 @@
 Upload a test for a user with id {id}
   Cannot be posted by a user with a different id than specified in the parameters. User needs to be logged in (have a valid JWT).
     ---
+    consumes:
+      - "application/json"
+    produces:
+    - "application/json"
+    security:
+    - APIKeyHeader: ['x-access-token']
     parameters:
-      - name: testing_center_id
+      - name: body
         in: body
-        type: integer
+        type: object
         required: true
-        description: "The id of the testing center where the user performed the test"
-        example: 1
-      - name: is_positive
-        in: body
-        type: boolean
-        required: true
-        description: The status of the user as at when the test was performed. Should be a boolean lowercase string. Any other value aside true is stored as false
-        example: "true"
-      - name: is_asymptomatic
-        in: body
-        type: boolean
-        required: true
-        description: Whether the user was asymptomatic as at when the test was performed. Should be a boolean lowercase string. Any other value aside true is stored as false
-        example: "true"
+        description: 
+          "testing_center_id - id of testing center where the test was performed \n\n
+          is_positive - The status of the user as at when the test was performed. Should be a boolean lowercase string. Any other value aside true is stored as false \n\n
+          is_asymptomatic - Whether the user was asymptomatic as at when the test was performed. Should be a boolean lowercase string. Any other value aside true is stored as false \n"
+        properties:
+          testing_center_id:
+            type: integer
+            example: 1
+          is_positive:
+            type: boolean
+            example: "true"
+          is_asymptomatic:
+            type: boolean
+            example: "true"
     definitions:
       Test:
         type: object
