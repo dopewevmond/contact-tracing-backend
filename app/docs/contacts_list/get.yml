@@ -8,7 +8,7 @@ Get all the contacts of a user with id of {id}
         in: path
         type: integer
         required: true
-        description: Id of the user whose contacts are being accessed
+        description: ID of the user whose contacts are being accessed
     consumes:
       - "application/json"
     produces:
