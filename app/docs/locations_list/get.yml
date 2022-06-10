@@ -8,7 +8,7 @@ Get all locations in a database.
     - APIKeyHeader: ['x-access-tokens']
     responses:
       200:
-        description: Location found.
+        description: Location found. Returns an array that contains details of all locations as objects.
         schema:
           type: array
           items:

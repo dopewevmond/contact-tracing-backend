@@ -36,31 +36,14 @@ Upload a test for a user with id {id}
         description: Returns the id of the test in the database and a status message
         schema:
           type: object
-          properties:
-            message:
-              type: "string"
-              example: "Added test successfully"
-            data:
-              type: object
-              properties:
-                id:
-                  type: "integer"
-                  example: 1
-            error:
-              type: null
-              example: null
-
+          $ref: '#/definitions/SuccessObject'
+      400:
+        description: Bad request.
+        schema:
+          type: object
+          $ref: '#/definitions/ErrorObject'
       401:
         description: Unauthorized user or authorized user trying to access location of other users
         schema:
           type: object
-          properties:
-            message:
-              type: "string"
-              example: "Unauthorized to access this resource"
-            data:
-              type: "null"
-              example: null
-            error:
-              type: "string"
-              example: "Unauthorized"
+          $ref: '#/definitions/ErrorObject'

@@ -26,34 +26,18 @@ Allows the user to add a new location to the database
         description: An object in the request body which contains the details of the location to add to the database.
     responses:
       200:
-        description: "Returns the id of the location that was just added to the database.\n
-        This id can then be used to add this location to a user's history by calling the `/users/{id}/visited` with a `POST` request."
+        description: "Returns the ID of the location that was just added to the database.\n
+        This ID can then be used to add this location to a user's history by calling the `/users/{id}/visited` with a `POST` request."
         schema:
           type: object
-          properties:
-            message:
-              type: "string"
-              example: "Added contact successfully"
-            data:
-              type: object
-              properties:
-                id:
-                  type: "integer"
-                  example: 1
-            error:
-              type: null
-              example: null
+          $ref: '#/definitions/SuccessObject'
+      400:
+        description: Bad request.
+        schema:
+          type: object
+          $ref: '#/definitions/ErrorObject'
       401:
         description: Unauthorized user trying to insert a location into the database.
         schema:
           type: object
-          properties:
-            message:
-              type: "string"
-              example: "Unauthorized to perform this operation."
-            data:
-              type: "null"
-              example: null
-            error:
-              type: "string"
-              example: "Unauthorized"
+          $ref: '#/definitions/ErrorObject'

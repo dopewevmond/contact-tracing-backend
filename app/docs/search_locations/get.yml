@@ -22,33 +22,17 @@ Check if a location exists in the database.
         description: Longitude of location to search for.
     responses:
       200:
-        description: Location found.
+        description: Location found. Returns ID of location found in database.
         schema:
           type: object
-          properties:
-            message:
-              type: "string"
-              example: "Location found"
-            data:
-              type: object
-              properties:
-                id:
-                  type: integer
-                  example: 1
-            error:
-              type: null
-              example: null
+          $ref: '#/definitions/SuccessObject'
+      400:
+        description: Bad request.
+        schema:
+          type: object
+          $ref: '#/definitions/ErrorObject'
       404:
-        description: Location not found
+        description: Location not found.
         schema:
           type: object
-          properties:
-            message:
-              type: "string"
-              example: "Location not found."
-            data:
-              type: "null"
-              example: null
-            error:
-              type: "string"
-              example: "Not found"
+          $ref: '#/definitions/ErrorObject'

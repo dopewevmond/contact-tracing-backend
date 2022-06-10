@@ -50,6 +50,7 @@ testing_center_fields = {
 }
 
 class TestListAPI(Resource):
+    """/users/{id}/tests - tests_list"""
     decorators = [token_required]
 
     def get(self, current_user, id):
@@ -163,6 +164,7 @@ class ContactAPI(Resource):
 
 
 class VisitedListAPI(Resource):
+    """/users/{id}/visited - visited_list"""
     decorators = [token_required]
 
     def get(self, current_user, id):
@@ -199,6 +201,7 @@ class VisitedListAPI(Resource):
 
 
 class VisitedAPI(Resource):
+    """/users/{id}/visited/{location_id} - visited"""
     decorators = [token_required]
 
     def delete(self, current_user, id, location_id):
@@ -224,6 +227,7 @@ class VisitedAPI(Resource):
 
 
 class SearchLocationAPI(Resource):
+    """/locations/search-by-lat-lon - search_by_text"""
     def get(self):
         self.reqparse = reqparse.RequestParser()
         self.reqparse.add_argument('lat', type=str, required=True, help='latitude of location to search not provided', location='args')
@@ -240,6 +244,7 @@ class SearchLocationAPI(Resource):
 
 
 class LocationListAPI(Resource):
+    """/locations/all"""
     def get(self):
         locations = Location.query.all()
         return {"message": "Locations found", "data": marshal(locations, location_fields), "error": None}, 200

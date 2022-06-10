@@ -19,100 +19,19 @@ Delete a location with id {location_id} from the location history of a user with
         type: integer
         required: true
         description: "ID of the location to be deleted from a user's hisory."
-    definitions:
-      # Test model
-      Test:
-        type: object
-        properties:
-          id:
-            type: "integer"
-            format: "int64"
-          date:
-            type: "string"
-            example: "2022-06-09 21:53:20.001234"
-          location:
-            type: "string"
-            example: "Ridge Hospital"
-      # User model
-      User:
-        type: object
-        properties:
-          id:
-            type: "integer"
-            format: "int64"
-          first_name:
-            type: "string"
-            example: "John"
-          last_name:
-            type: "string"
-            example: "Doe"
-          username:
-            type: "string"
-            example: "johnthedoe"
-          email:
-            type: "string"
-            example: "John"
-          gender:
-            type: "boolean"
-            example: "true"
-          dob:
-            type: "string"
-            example: "2022-06-09 21:53:20.001234"
-          phone_number:
-            type: "string"
-            example: "233-457-2345"
-          is_verified:
-            type: "boolean"
-            example: "false"
-          is_admin:
-            type: "boolean"
-            example: "false"
-      # Visited locations model
-      VisitedLocation:
-        type: object
-        properties:
-          location_name:
-            type: "string"
-            example: "Bloombar"
-          date_tested:
-            type: "string"
-            example: "2022-06-09 21:53:20.001234"
-      ErrorObject:
-        type: object
-        properties:
-          data:
-            type: null
-            example: "null"
-          error:
-            type: string
-          message:
-            type: string
     responses:
       200:
-        description: Contact was removed successfully
+        description: Contact was removed successfully.
         schema:
           type: object
-          properties:
-            message:
-              type: "string"
-              example: "Removed contact successfully"
-            data:
-              type: null
-              example: null
-            error:
-              type: null
-              example: null
+          $ref: '#/definitions/SuccessObject'
+      400:
+        description: Bad request.
+        schema:
+          type: object
+          $ref: '#/definitions/ErrorObject'
       401:
-        description: Unauthorized user or authorized user trying to delete contacts on behalf of another user
+        description: Unauthorized user trying to insert a location into the database.
         schema:
           type: object
-          properties:
-            message:
-              type: "string"
-              example: "Unauthorized to access this resource"
-            data:
-              type: "null"
-              example: null
-            error:
-              type: "string"
-              example: "Unauthorized"
+          $ref: '#/definitions/ErrorObject'

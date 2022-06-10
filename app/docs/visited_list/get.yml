@@ -25,13 +25,4 @@ Get all the visited locations and the date visited of a user with id of {id}
         description: Unauthorized user or authorized user trying to access location of other users
         schema:
           type: object
-          properties:
-            message:
-              type: "string"
-              example: "Unauthorized to access this resource"
-            data:
-              type: "null"
-              example: null
-            error:
-              type: "string"
-              example: "Unauthorized"
+          $ref: '#/definitions/ErrorObject'
