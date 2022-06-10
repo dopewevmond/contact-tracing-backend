@@ -83,11 +83,29 @@ Delete a user with id {contact_id} from the contacts of a user with id of {id}
         properties:
           data:
             type: null
-            example: "null"
+            example: null
           error:
             type: string
+            example: A more detailed explanation of the error.
           message:
             type: string
+            example: Something went wrong.
+      # Success object model
+      SuccessObject:
+        type: object
+        properties:
+          data:
+            type: object
+            properties:
+              id:
+                type: integer
+                example: 1
+          error:
+            type: null
+            example: null
+          message:
+            type: string
+            example: Performed action successfully
       # Location object model
       Location:
         type: object
@@ -106,30 +124,13 @@ Delete a user with id {contact_id} from the contacts of a user with id of {id}
             example: National Theatre
     responses:
       200:
-        description: Contact was removed successfully
+        description: Contact was removed successfully.
         schema:
           type: object
-          properties:
-            message:
-              type: "string"
-              example: "Removed contact successfully"
-            data:
-              type: null
-              example: null
-            error:
-              type: null
-              example: null
+          $ref: '#/definitions/SuccessObject'
+
       401:
-        description: Unauthorized user or authorized user trying to delete contacts on behalf of another user
+        description: Unauthorized user or authorized user trying to delete contacts on behalf of another user.
         schema:
           type: object
-          properties:
-            message:
-              type: "string"
-              example: "Unauthorized to access this resource"
-            data:
-              type: "null"
-              example: null
-            error:
-              type: "string"
-              example: "Unauthorized"
+          $ref: '#/definitions/ErrorObject'
