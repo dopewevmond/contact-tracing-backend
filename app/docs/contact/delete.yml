@@ -13,7 +13,7 @@ Delete a user with id {contact_id} from the contacts of a user with id of {id}
         in: path
         type: integer
         required: true
-        description: ID of the user whose contacts are being accessed
+        description: ID of the user who wants to delete someone from their contact list.
       - name: body
         in: body
         type: object
@@ -22,7 +22,7 @@ Delete a user with id {contact_id} from the contacts of a user with id of {id}
             type: integer
             example: 1
         required: true
-        description: An object in the request body which contains the ID of the contact to be deleted from the contact list
+        description: An object in the request body which contains the ID of the contact to be deleted from the contact list.
     definitions:
       # Test model
       Test:

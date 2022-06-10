@@ -8,6 +8,12 @@ Get all the visited locations and the date visited of a user with id of {id}
     - "application/json"
     security:
     - APIKeyHeader: ['x-access-tokens']      
+    parameters:
+      - name: id
+        in: path
+        type: integer
+        required: true
+        description: ID of the user whose location history (places they visited) is being accessed.
     responses:
       200:
         description: A list of contacts of a user

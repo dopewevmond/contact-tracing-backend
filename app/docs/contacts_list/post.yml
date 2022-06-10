@@ -12,7 +12,7 @@ Adds a new user to the contacts of a user with id of {id}
         in: path
         type: integer
         required: true
-        description: ID of the user whose contacts are being accessed
+        description: ID of the user who wants to add someone as a close contact
       - name: body
         in: body
         type: object

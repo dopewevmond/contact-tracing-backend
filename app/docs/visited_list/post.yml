@@ -1,22 +1,27 @@
 Adds a new location to the location history of a user with id of {id}
   Cannot be accessed by a user with a different id than specified in the params. User needs to be logged in (have a valid JWT).
     ---
-    parameters:
-      - name: body
-        in: body
-        type: object
-        description: location_id - id of location where the user visited in the database
-        properties:
-          location_id:
-            type: integer
-            example: 1
-        required: true
     consumes:
       - "application/json"
     produces:
     - "application/json"
     security:
     - APIKeyHeader: ['x-access-tokens']
+    parameters:
+      - name: id
+        in: path
+        type: integer
+        required: true
+        description: ID of the user who is adding a location to their location history
+      - name: body
+        in: body
+        type: object
+        description: "location_id - ID of location where the user visited. \n\nCan be obtained from the location object from the database."
+        properties:
+          location_id:
+            type: integer
+            example: 1
+        required: true
     responses:
       200:
         description: Returns the id of the location that was just added to location history
