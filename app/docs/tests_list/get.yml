@@ -8,6 +8,12 @@ Get all the tests carried out by a user with id of {id}
     - "application/json"
     security:
     - APIKeyHeader: ['x-access-tokens']
+    parameters:
+      - name: id
+        in: path
+        type: integer
+        required: true
+        description: ID of the user whose tests are being accessed.
     responses:
       200:
         description: A list of tests carried out by a user

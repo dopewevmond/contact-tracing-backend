@@ -8,14 +8,19 @@ Upload a test for a user with id {id}
     security:
     - APIKeyHeader: ['x-access-tokens']
     parameters:
+      - name: id
+        in: path
+        type: integer
+        required: true
+        description: ID of the user who is adding uploading test results.
       - name: body
         in: body
         type: object
         required: true
         description: 
-          "testing_center_id - id of testing center where the test was performed \n\n
-          is_positive - The status of the user as at when the test was performed. Should be a boolean lowercase string. Any other value aside true is stored as false \n\n
-          is_asymptomatic - Whether the user was asymptomatic as at when the test was performed. Should be a boolean lowercase string. Any other value aside true is stored as false \n"
+          "testing_center_id - id of testing center where the test was performed.\n\n
+          is_positive - The status of the user as at when the test was performed. Should be a boolean lowercase string. Any other value aside true is stored as false.\n\n
+          is_asymptomatic - Whether the user was asymptomatic as at when the test was performed. Should be a boolean lowercase string. Any other value aside true is stored as false.\n"
         properties:
           testing_center_id:
             type: integer
