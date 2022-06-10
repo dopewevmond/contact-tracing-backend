@@ -7,7 +7,7 @@ Delete a user with id {contact_id} from the contacts of a user with id of {id}
     produces:
     - "application/json"
     security:
-    - APIKeyHeader: ['x-access-token']
+    - APIKeyHeader: ['x-access-tokens']
     parameters:
       - name: body
         in: body
@@ -75,6 +75,16 @@ Delete a user with id {contact_id} from the contacts of a user with id of {id}
           date_tested:
             type: "string"
             example: "2022-06-09 21:53:20.001234"
+      ErrorObject:
+        type: object
+        properties:
+          data:
+            type: null
+            example: "null"
+          error:
+            type: string
+          message:
+            type: string
     responses:
       200:
         description: Contact was removed successfully

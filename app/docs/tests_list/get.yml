@@ -7,7 +7,7 @@ Get all the tests carried out by a user with id of {id}
     produces:
     - "application/json"
     security:
-    - APIKeyHeader: ['x-access-token']
+    - APIKeyHeader: ['x-access-tokens']
     responses:
       200:
         description: A list of tests carried out by a user

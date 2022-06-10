@@ -6,7 +6,7 @@ Adds a new user to the contacts of a user with id of {id}
     produces:
     - "application/json"
     security:
-    - APIKeyHeader: ['x-access-token']
+    - APIKeyHeader: ['x-access-tokens']
     parameters:
       - name: body
         in: body

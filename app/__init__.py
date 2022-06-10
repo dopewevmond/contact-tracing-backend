@@ -9,7 +9,7 @@ from flasgger import Swagger
 db = SQLAlchemy()
 migrate = Migrate()
 
-SWAGGER_TEMPLATE = {"securityDefinitions": {"APIKeyHeader": {"type": "apiKey", "name": "x-access-token", "in": "header"}}}
+SWAGGER_TEMPLATE = {"securityDefinitions": {"APIKeyHeader": {"type": "apiKey", "name": "x-access-tokens", "in": "header"}}}
 swagger = Swagger(template=SWAGGER_TEMPLATE)
 
 def create_app(config_class=Config):

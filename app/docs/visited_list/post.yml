@@ -16,7 +16,7 @@ Adds a new location to the location history of a user with id of {id}
     produces:
     - "application/json"
     security:
-    - APIKeyHeader: ['x-access-token']
+    - APIKeyHeader: ['x-access-tokens']
     responses:
       200:
         description: Returns the id of the location that was just added to location history

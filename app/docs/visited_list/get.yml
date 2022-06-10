@@ -7,7 +7,7 @@ Get all the visited locations and the date visited of a user with id of {id}
     produces:
     - "application/json"
     security:
-    - APIKeyHeader: ['x-access-token']      
+    - APIKeyHeader: ['x-access-tokens']      
     responses:
       200:
         description: A list of contacts of a user
