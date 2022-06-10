@@ -1,0 +1,68 @@
+Upload a test for a user with id {id}
+  Cannot be posted by a user with a different id than specified in the parameters. User needs to be logged in (have a valid JWT).
+    ---
+    parameters:
+      - name: testing_center_id
+        in: body
+        type: integer
+        required: true
+        description: "The id of the testing center where the user performed the test"
+        example: 1
+      - name: is_positive
+        in: body
+        type: boolean
+        required: true
+        description: The status of the user as at when the test was performed. Should be a boolean lowercase string. Any other value aside true is stored as false
+        example: "true"
+      - name: is_asymptomatic
+        in: body
+        type: boolean
+        required: true
+        description: Whether the user was asymptomatic as at when the test was performed. Should be a boolean lowercase string. Any other value aside true is stored as false
+        example: "true"
+    definitions:
+      Test:
+        type: object
+        properties:
+          id:
+            type: "integer"
+            format: "int64"
+          date:
+            type: "string"
+            example: "2022-06-09 21:53:20.001234"
+          location:
+            type: "string"
+            example: "Ridge Hospital"
+    responses:
+      200:
+        description: Returns the id of the test in the database and a status message
+        schema:
+          type: object
+          properties:
+            message:
+              type: "string"
+              example: "Added test successfully"
+            data:
+              type: object
+              properties:
+                id:
+                  type: "integer"
+                  example: 1
+            error:
+              type: null
+              example: null
+
+      401:
+        description: Unauthorized user or authorized user trying to access location of other users
+        schema:
+          type: object
+          properties:
+            message:
+              type: "string"
+              example: "Unauthorized to access this resource"
+            data:
+              type: "null"
+              example: null
+            error:
+              type: "string"
+              example: "Unauthorized"

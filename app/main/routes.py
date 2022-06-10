@@ -53,9 +53,6 @@ class TestListAPI(Resource):
     decorators = [token_required]
 
     def get(self, current_user, id):
-        """
-        Retrieves all tests of a user with an id == params:id. Can be accessed only by owner of resource
-        """
         if not current_user.id == id:
             return {
                 "message": "Unauthorized to access this resource",
@@ -70,10 +67,6 @@ class TestListAPI(Resource):
         return marshal(deserialized, test_fields)
 
     def post(self, current_user, id):
-        """
-        Adds a new test to the database for a user. The is_positive and is_asymptomatic arguments must be passed as lowercase boolean string.\n
-        Either `true` or `false`. Any other value will be interpreted as False
-        """
         self.reqparse = reqparse.RequestParser()
         self.reqparse.add_argument('testing_center_id', type=int, required=True, help='ID of testing center missing', location='json')
         self.reqparse.add_argument('is_positive', type=str, required=True, help='Add value for is_positive. 0 for false, 1 for true', location='json')

@@ -9,3 +9,8 @@ class Config(object):
     ELASTICSEARCH_URL = os.environ.get('ELASTICSEARCH_URL')
     USERS_PER_PAGE = 10
     AWS_S3_BUCKET_NAME = os.environ.get('AWS_S3_BUCKET_NAME')
+    SWAGGER = {
+        'title': 'Contact Tracing API',
+        'doc_dir': os.path.join(basedir, 'docs'),
+        'description': 'Documentation for contact tracing REST API'
+    }
