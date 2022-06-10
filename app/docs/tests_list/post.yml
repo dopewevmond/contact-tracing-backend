@@ -33,7 +33,7 @@ Upload a test for a user with id {id}
             example: "true"
     responses:
       200:
-        description: Returns the id of the test in the database and a status message
+        description: Returns the id of the test in the database and a status message.
         schema:
           type: object
           $ref: '#/definitions/SuccessObject'
@@ -43,7 +43,7 @@ Upload a test for a user with id {id}
           type: object
           $ref: '#/definitions/ErrorObject'
       401:
-        description: Unauthorized user or authorized user trying to access location of other users
+        description: Unauthorized user or authorized user trying to upload a test for other users.
         schema:
           type: object
           $ref: '#/definitions/ErrorObject'

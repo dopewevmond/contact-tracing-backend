@@ -16,13 +16,13 @@ Get all the tests carried out by a user with id of {id}
         description: ID of the user whose tests are being accessed.
     responses:
       200:
-        description: A list of tests carried out by a user
+        description: A list of tests carried out by a user.
         schema:
           type: "array"
           items:
             $ref: "#/definitions/Test"
       401:
-        description: Unauthorized user or authorized user trying to access location of other users
+        description: Unauthorized user or authorized user trying to access tests of other users.
         schema:
           type: object
           $ref: '#/definitions/ErrorObject'

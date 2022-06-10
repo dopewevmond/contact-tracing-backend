@@ -93,6 +93,7 @@ class TestListAPI(Resource):
 
 
 class ContactListAPI(Resource):
+    """/users/{id}/contacts - contacts_list"""
     decorators = [token_required]    
 
     def get(self, current_user, id):

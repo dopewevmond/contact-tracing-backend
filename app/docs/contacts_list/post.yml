@@ -27,30 +27,14 @@ Adds a new user to the contacts of a user with id of {id}
         description: Returns the id of the user that was just added to close contacts
         schema:
           type: object
-          properties:
-            message:
-              type: "string"
-              example: "Added contact successfully"
-            data:
-              type: object
-              properties:
-                id:
-                  type: "integer"
-                  example: 1
-            error:
-              type: null
-              example: null
-      401:
-        description: Unauthorized user or authorized user trying to access location of other users
+          $ref: '#/definitions/SuccessObject'
+      400:
+        description: Bad request.
         schema:
           type: object
-          properties:
-            message:
-              type: "string"
-              example: "Unauthorized to access this resource"
-            data:
-              type: "null"
-              example: null
-            error:
-              type: "string"
-              example: "Unauthorized"
+          $ref: '#/definitions/ErrorObject'
+      401:
+        description: Unauthorized user or authorized user trying to access contacts of other users
+        schema:
+          type: object
+          $ref: '#/definitions/ErrorObject'
