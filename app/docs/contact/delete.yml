@@ -122,6 +122,38 @@ Delete a user with id {contact_id} from the contacts of a user with id of {id}
           location_name:
             type: string
             example: National Theatre
+      # User Object Model with minimal fields
+      UserMin:
+        type: object
+        properties:
+          id:
+            type: "integer"
+            format: "int64"
+          first_name:
+            type: "string"
+            example: "John"
+          last_name:
+            type: "string"
+            example: "Doe"
+          username:
+            type: "string"
+            example: "johnthedoe"
+      # Testing Center Model
+      TestingCenter:
+        type: object
+        properties:
+          id:
+            type: integer
+            format: "int64"
+          name:
+            type: string
+            example: Ridge Hospital
+          region:
+            type: string
+            example: GRA
+          constituency:
+            type: string
+            example: New Constituency
     responses:
       200:
         description: Contact was removed successfully.

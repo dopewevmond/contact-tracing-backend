@@ -76,15 +76,12 @@ class TestListAPI(Resource):
         center_id, is_pos, is_asymp = args['testing_center_id'], args['is_positive'], args['is_asymptomatic']
         if not center_id or not is_pos or not is_asymp:
             abort(400)
-
         if not current_user.id == id:
             return {
                 "message": "Unauthorized to access this resource",
                 "data": None,
                 "error": "Unauthorized"
-            }, 401
-
-        
+            }, 401        
         is_pos, is_asymp = is_pos == "true", is_asymp == "true"
         new_test = Test(is_positive=is_pos, is_asymptomatic=is_asymp, user_id=current_user.id, testing_center_id=center_id)
         db.session.add(new_test)
@@ -103,7 +100,6 @@ class ContactListAPI(Resource):
                 "data": None,
                 "error": "Unauthorized"
             }, 401
-
         user = User.query.filter_by(id=id).first()
         contacts = user.knows.all()
         return marshal(contacts, user_fields)
@@ -117,14 +113,12 @@ class ContactListAPI(Resource):
         contact_id = args['contact_id']
         if contact_id is None:
             abort(400)
-
         if not current_user.id == id:
             return {
                 "message": "Unauthorized to perform this operation",
                 "data": None,
                 "error": "Unauthorized"
             }, 401
-
         user_to_add_to_contacts = User.query.get(contact_id)
         if not user_to_add_to_contacts or user_to_add_to_contacts.is_known_by(current_user):
             return {
@@ -132,7 +126,6 @@ class ContactListAPI(Resource):
                 "data": None,
                 "error": "Bad request"
         }, 400
-
         current_user.knows.append(user_to_add_to_contacts)
         db.session.add(current_user)
         db.session.commit()
@@ -150,7 +143,6 @@ class ContactAPI(Resource):
                 "data": None,
                 "error": "Unauthorized"
             }, 401
-
         user_to_remove = User.query.get(contact_id)
         if not user_to_remove or not user_to_remove.is_known_by(current_user):
             return {
@@ -158,7 +150,6 @@ class ContactAPI(Resource):
                 "data": None,
                 "error": "Bad request"
         }, 400     
-
         current_user.knows.remove(user_to_remove)
         db.session.add(current_user)
         db.session.commit()
@@ -176,7 +167,6 @@ class VisitedListAPI(Resource):
                     "data": None,
                     "error": "Unauthorized"
             }, 401
-
         visited_locations = current_user.visited_locations().all()
         return marshal(visited_locations, visited_fields), 200
 
@@ -187,14 +177,12 @@ class VisitedListAPI(Resource):
         location_id = args['location_id']
         if location_id is None:
             abort(400)
-
         if not current_user.id == id:
             return {
                 "message": "Unauthorized to perform this operation",
                 "data": None,
                 "error": "Unauthorized"
             }, 401
-        
         location_to_add = Location.query.get(location_id)
         current_user.visits.append(location_to_add)
         db.session.add(current_user)
@@ -213,7 +201,6 @@ class VisitedAPI(Resource):
                 "data": None,
                 "error": "Unauthorized"
             }, 401
-        
         location_to_remove = Location.query.get(location_id)
         if not location_to_remove or not current_user in location_to_remove.wasvisitedby:
             return {
@@ -221,7 +208,6 @@ class VisitedAPI(Resource):
                 "data": None,
                 "error": "Bad request"
             }, 400    
-
         current_user.visits.remove(location_to_remove)
         db.session.add(current_user)
         db.session.commit()
@@ -237,7 +223,6 @@ class SearchLocationAPI(Resource):
         args = self.reqparse.parse_args()
         if not args['lat'] or not args['lon']:
             abort(400)
-        
         latitude, longitude = args['lat'], args['lon']
         location = Location.query.filter_by(longitude=float(longitude)).filter_by(latitude=float(latitude)).first()
         if location is None:
@@ -289,16 +274,11 @@ class UserAPI(Resource):
 
     
     def put(self, current_user, id):
-        """
-        Put will be to edit profile. Delete method will not be allowed yet.
-        """
         if not current_user.id == id or current_user.is_verified:
             abort(401)
-        
         user = User.query.get(id)
         if not user:
             abort(404)
-
         self.reqparse = reqparse.RequestParser()
         self.reqparse.add_argument('first_name', type=str, help='Provide a valid first name', location='json')
         self.reqparse.add_argument('other_names', type=str, help='Provide a valid middle name', location='json')
@@ -308,7 +288,6 @@ class UserAPI(Resource):
         self.reqparse.add_argument('username', type=str, help='Provide a valid username', location='json')
         self.reqparse.add_argument('phone_number', type=str, help='Provide a phone number', location='json')
         args = self.reqparse.parse_args()
-
         try:
             # the gender and dob fields need to be modified a bit before they can ...
             # ... be applied to the user object
@@ -317,7 +296,6 @@ class UserAPI(Resource):
             if args['dob']:
                 datetime_obj = datetime.strptime(args['dob'], '%Y-%m-%dT%H:%M:%S.%fZ')
                 user.dob = datetime_obj
-
             for key, value in args.items():
                 if value and key != 'gender' and key != 'dob':
                     user.__setattr__(key, value)
@@ -338,29 +316,36 @@ class UserAPI(Resource):
 
 
 class SearchUserAPI(Resource):
+    """/users/search - search_users"""
     def get(self):
-        self.reqparse = reqparse.RequestParser()
-        self.reqparse.add_argument('q', type=str, required=True, help='Type in a name or username of a user to search', location='args')
-        args = self.reqparse.parse_args()
-        user_details = args['q']
-        found_users, total = User.search(user_details, 1, current_app.config['USERS_PER_PAGE'])
-        found_users = found_users.all()
-        if total > 0:
-            return {"message": "Users found", "error": None, "data": {"count": total, "users": marshal(found_users, user_fields_min)}}, 200
-        return {"message": "No users found", "error": None, "data": {"count": total, "users": []}}, 200
+        try:
+            self.reqparse = reqparse.RequestParser()
+            self.reqparse.add_argument('q', type=str, required=True, help='Type in a name or username of a user to search', location='args')
+            args = self.reqparse.parse_args()
+            user_details = args['q']
+            found_users, total = User.search(user_details, 1, current_app.config['USERS_PER_PAGE'])
+            found_users = found_users.all()
+            if total > 0:
+                return {"message": "Users found", "error": None, "data": {"count": total, "users": marshal(found_users, user_fields_min)}}, 200
+            return {"message": "No users found", "error": None, "data": {"count": total, "users": []}}, 200
+        except Exception as e:
+            return {"message": "An error occured", "error": "Bad request", "data": None}, 400
 
 class SearchTestingCenterAPI(Resource):
+    """/testing-centers/search - search_testing_centers"""
     def get(self):
-        self.reqparse = reqparse.RequestParser()
-        self.reqparse.add_argument('q', type=str, required=True, help='Type in the name of the testing center to search', location='args')
-        args = self.reqparse.parse_args()
-        testing_center_details = args['q']
-        found_testing_centers, total = TestingCenter.search(testing_center_details, 1, current_app.config['USERS_PER_PAGE'])
-        found_testing_centers = found_testing_centers.all()
-        if total > 0:
-            return {"message": "Testing centers found", "error": None, "data": {"count": total, "testing_centers": marshal(found_testing_centers, testing_center_fields)}}, 200
-        return {"message": "No testing centers found", "error": None, "data": {"count": total, "testing_centers": []}}, 200
-
+        try:
+            self.reqparse = reqparse.RequestParser()
+            self.reqparse.add_argument('q', type=str, required=True, help='Type in the name of the testing center to search', location='args')
+            args = self.reqparse.parse_args()
+            testing_center_details = args['q']
+            found_testing_centers, total = TestingCenter.search(testing_center_details, 1, current_app.config['USERS_PER_PAGE'])
+            found_testing_centers = found_testing_centers.all()
+            if total > 0:
+                return {"message": "Testing centers found", "error": None, "data": {"count": total, "testing_centers": marshal(found_testing_centers, testing_center_fields)}}, 200
+            return {"message": "No testing centers found", "error": None, "data": {"count": total, "testing_centers": []}}, 200
+        except Exception as e:
+            return {"message": "An error occured", "error": "Bad request", "data": None}, 400
 
 
 api.add_resource(ContactListAPI, '/users/<int:id>/contacts', endpoint='contacts_list')

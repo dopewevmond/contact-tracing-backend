@@ -1,0 +1,27 @@
+Search for a testing center in the database.
+  To search for a testing center, pass in their `name`, `region` or `constituency` as a query string for the key `q`.
+    ---
+    consumes:
+      - "application/json"
+    produces:
+    - "application/json"
+    security:
+    - APIKeyHeader: ['x-access-tokens']
+    parameters:
+      - name: q
+        in: query
+        type: string
+        required: true
+        description: Name region or constituency of the testing center to search for.
+    responses:
+      200:
+        description: A list of object where each object represents information about found testing centers. It will return an empty list if no testing centers are found.
+        schema:
+          type: "array"
+          items:
+            $ref: "#/definitions/TestingCenter"
+      400:
+        description: Bad request.
+        schema:
+          type: object
+          $ref: '#/definitions/ErrorObject'
