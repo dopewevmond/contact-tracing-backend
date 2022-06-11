@@ -1,0 +1,35 @@
+Return all information of a user with id of {id}
+  Could be used in say a GET request to `edit user profile` to get all information about a user.
+  If the user wants to say, make changes, the input fields can be populated with the information of the user so that they see the initial value of a field before they make a change.
+  Cannot be accessed by a user with a different id than specified in the parameters. User needs to be logged in (have a valid JWT).
+  Therefore to get the information a user <User 1> with id of 1, a GET request can be sent to `/users/1/tests` by <User 1>
+    ---
+    consumes:
+      - "application/json"
+    produces:
+    - "application/json"
+    security:
+    - APIKeyHeader: ['x-access-tokens']
+    parameters:
+      - name: id
+        in: path
+        type: integer
+        required: true
+        description: ID of the user whose profile is being accessed.
+    responses:
+      200:
+        description: Returns all information about a user.
+        schema:
+          type: "array"
+          items:
+            $ref: "#/definitions/User"
+      401:
+        description: Unauthorized user or authorized user trying to access information of other users.
+        schema:
+          type: object
+          $ref: '#/definitions/ErrorObject'
+      404:
+        description: User not found.
+        schema:
+          type: object
+          $ref: '#/definitions/ErrorObject'

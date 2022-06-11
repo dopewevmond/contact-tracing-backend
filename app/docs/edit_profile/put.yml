@@ -1,0 +1,73 @@
+Return all information of a user with id of {id}
+  Could be used in say a GET request to `edit user profile` to populate the form with the existing data before the user makes changes.
+  Cannot be accessed by a user with a different id than specified in the parameters. User needs to be logged in (have a valid JWT).
+  Therefore to get the information a user <User 1> with id of 1, a GET request can be sent to `/users/1/tests` by <User 1>
+    ---
+    consumes:
+      - "application/json"
+    produces:
+    - "application/json"
+    security:
+    - APIKeyHeader: ['x-access-tokens']
+    parameters:
+      - name: id
+        in: path
+        type: integer
+        required: true
+        description: ID of the user whose profile is being edited.
+      - name: body
+        in: body
+        type: object
+        properties:
+          first_name:
+            type: string
+            example: "John"
+          other_names:
+            type: string
+            example: "Dummy"
+          last_name:
+            type: string
+            example: "Doe"
+          gender:
+            type: string
+            example: "m"
+          dob:
+            type: string
+            example: "2022-06-11T00:42:12.051257"
+          username:
+            type: string
+            example: "johndoe"
+          phone_number:
+            type: string
+            example: "233-932-5892"
+        required: true
+        description: "An object that contains the the information of a user. The existing information of the user will be overwritten by this object.\n\n
+        `first_name`: The first name of the user\n
+        `other_names`: Other names of the user\n
+        `last_name`: The last name of the user\n
+        `gender`: The gender of the user. Should be a string in enum `['m', 'f']`\n
+        `dob`: The date of birth of the user. Should be in ISO string format\n
+        `username`: The username of the user\n
+        `phone_number`: The phone number of the user\n\n
+        "
+    responses:
+      200:
+        description: Returns the ID of the user whose profile was edited.
+        schema:
+          type: object
+          $ref: "#/definitions/SuccessObject"
+      400:
+        description: Bad request.
+        schema:
+          type: object
+          $ref: '#/definitions/ErrorObject'
+      401:
+        description: Unauthorized user or authorized user trying to access tests of other users or user has been verified so cannot be allowed to change details.
+        schema:
+          type: object
+          $ref: '#/definitions/ErrorObject'
+      404:
+        description: User ID not found.
+        schema:
+          type: object
+          $ref: '#/definitions/ErrorObject'

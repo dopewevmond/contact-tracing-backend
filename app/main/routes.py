@@ -334,7 +334,7 @@ class UserAPI(Resource):
                 "message": "Something went wrong",
                 "error": str(e),
                 "data": None
-            }, 401
+            }, 400
 
 
 class SearchUserAPI(Resource):
