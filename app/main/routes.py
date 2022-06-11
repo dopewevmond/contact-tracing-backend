@@ -140,6 +140,7 @@ class ContactListAPI(Resource):
 
 
 class ContactAPI(Resource):
+    """/users/{id}/contacts/{contact_id} - contact"""
     decorators = [token_required]
 
     def delete(self, current_user, id, contact_id):
@@ -276,16 +277,11 @@ class LocationListAPI(Resource):
 
 
 class UserAPI(Resource):
+    """/users/{id}/edit-profile - edit_profile"""
     decorators = [token_required]
     def get(self, current_user, id):
-        """
-        Return all user information.
-        Could be used in say a GET request to `edit user profile` to populate...
-        ... the form with the existing data before the user makes changes
-        """
         if not current_user.id == id:
             abort(401)
-        
         user = User.query.get(id)
         if not user:
             abort(404)
@@ -305,34 +301,26 @@ class UserAPI(Resource):
 
         self.reqparse = reqparse.RequestParser()
         self.reqparse.add_argument('first_name', type=str, help='Provide a valid first name', location='json')
-        self.reqparse.add_argument('other_name', type=str, help='Provide a valid middle name', location='json')
+        self.reqparse.add_argument('other_names', type=str, help='Provide a valid middle name', location='json')
         self.reqparse.add_argument('last_name', type=str, help='Provide a valid last name', location='json')
         self.reqparse.add_argument('gender', type=str, help='Select a gender', location='json')
         self.reqparse.add_argument('dob', type=str, help='Provide a date of birth', location='json')
         self.reqparse.add_argument('username', type=str, help='Provide a valid username', location='json')
-        self.reqparse.add_argument('phonenumber', type=str, help='Provide a phone number', location='json')
+        self.reqparse.add_argument('phone_number', type=str, help='Provide a phone number', location='json')
         args = self.reqparse.parse_args()
 
-        fname, othname, lname, gen, dob, user_name, pnumber = args['first_name'], args['other_name'], args['last_name'],\
-            args['gender'], args['dob'], args['username'], args['phonenumber']
-
         try:
-            if fname:
-                user.first_name = fname
-            if lname:
-                user.last_name = lname
-            if othname:
-                user.other_names = othname
-            user.gender = False
-            if gen:
-                user.gender = gen.lower() == 'm'
-            if dob:
-                datetime_obj = datetime.strptime(dob, '%Y-%m-%dT%H:%M:%S.%fZ')
+            # the gender and dob fields need to be modified a bit before they can ...
+            # ... be applied to the user object
+            if args['gender'] and args['gender'].lower() in ['m', 'f']:
+                user.gender = args['gender'].lower() == 'm'
+            if args['dob']:
+                datetime_obj = datetime.strptime(args['dob'], '%Y-%m-%dT%H:%M:%S.%fZ')
                 user.dob = datetime_obj
-            if user_name and not User.check_if_username_exists(user_name):
-                user.username = user_name
-            if pnumber:
-                user.phone_number = pnumber
+
+            for key, value in args.items():
+                if value and key != 'gender' and key != 'dob':
+                    user.__setattr__(key, value)
             db.session.add(user)
             db.session.commit()
             return {
@@ -341,6 +329,7 @@ class UserAPI(Resource):
                 "error": None
             }, 200
         except Exception as e:
+            print(e)
             return {
                 "message": "Something went wrong",
                 "error": str(e),
