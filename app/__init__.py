@@ -5,9 +5,11 @@ from .config import Config
 from flask_restful import Api
 from elasticsearch import Elasticsearch
 from flasgger import Swagger
+from flask_mail import Mail
 
 db = SQLAlchemy()
 migrate = Migrate()
+mail = Mail()
 
 SWAGGER_TEMPLATE = {"securityDefinitions": {"APIKeyHeader": {"type": "apiKey", "name": "x-access-tokens", "in": "header"}}}
 swagger = Swagger(template=SWAGGER_TEMPLATE)
@@ -21,6 +23,7 @@ def create_app(config_class=Config):
     db.init_app(app)
     migrate.init_app(app, db)
     swagger.init_app(app)
+    mail.init_app(app)
     
     from app.main import bp as main_bp
     from app.auth import bp as auth_bp
