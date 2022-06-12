@@ -1,8 +1,7 @@
 from app.dummy import bp
 from flask_restful import Api, Resource, reqparse
-from flask_mail import Message
+from app.email import send_email
 from flask import current_app
-from app import mail
 
 api = Api(bp)
 
@@ -17,9 +16,9 @@ class MyTest(Resource):
 
 class SendEmail(Resource):
     def get(self):
-        msg = Message('Subject Line', sender=current_app.config['MAIL_USERNAME'], recipients=['dopewevmond@gmail.com'])
-        msg.body = 'This is the body of the email'
-        mail.send(msg)
+        txt_body = "This is a test email from the Flask server"
+        html_body = f'<p>{txt_body}</p>'
+        send_email(subject='TEST EMAIL - CONTACT TRACING', sender=current_app.config['MAIL_USERNAME'], recipients=['klenamaj3@gmail.com'], text_body=txt_body, html_body=html_body)
         return "Mail sent"
 
 
