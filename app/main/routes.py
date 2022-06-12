@@ -5,6 +5,7 @@ from app.auth.routes import token_required, admin_access_required
 from app import db
 from datetime import datetime
 from flask import current_app
+from app.email import send_email
 
 api = Api(bp)
 
@@ -70,11 +71,11 @@ class TestListAPI(Resource):
     def post(self, current_user, id):
         self.reqparse = reqparse.RequestParser()
         self.reqparse.add_argument('testing_center_id', type=int, required=True, help='ID of testing center missing', location='json')
-        self.reqparse.add_argument('is_positive', type=str, required=True, help='Add value for is_positive. 0 for false, 1 for true', location='json')
-        self.reqparse.add_argument('is_asymptomatic', type=str, required=True, help='Add value for is_positive. 0 for false, 1 for true', location='json')
+        self.reqparse.add_argument('is_positive', type=str, required=True, help='Add value for is_positive. either true or false', location='json')
+        self.reqparse.add_argument('is_asymptomatic', type=str, required=True, help='Add value for is_positive. either true or false', location='json')
         args = self.reqparse.parse_args()
         center_id, is_pos, is_asymp = args['testing_center_id'], args['is_positive'], args['is_asymptomatic']
-        if not center_id or not is_pos or not is_asymp:
+        if not center_id or not is_pos or not is_asymp or is_pos not in ['true', 'false'] or is_asymp not in ['true', 'false']:
             abort(400)
         if not current_user.id == id:
             return {
@@ -83,10 +84,33 @@ class TestListAPI(Resource):
                 "error": "Unauthorized"
             }, 401        
         is_pos, is_asymp = is_pos == "true", is_asymp == "true"
-        new_test = Test(is_positive=is_pos, is_asymptomatic=is_asymp, user_id=current_user.id, testing_center_id=center_id)
-        db.session.add(new_test)
-        db.session.commit()
-        return {"message": "Added test successfully", "error": None, "data": {"id": new_test.id}}, 200
+        try:
+            new_test = Test(is_positive=is_pos, is_asymptomatic=is_asymp, user_id=current_user.id, testing_center_id=center_id)
+            db.session.add(new_test)
+            db.session.commit()
+            
+            # send email to the users close contacts
+            emails_of_contacts = current_user.get_all_close_contacts_emails()
+            txt_body = "This is an alert email from a contact tracing app. A close contact of yours contracted covid. Please self isolate and\
+                get tested too as you might be at risk"
+            html_body = f'<p>{txt_body}</p>'
+
+            # since we want to send the emails with bcc so that the recipients will not find out
+            # who else received an email. for privacy and security reasons
+            if emails_of_contacts:
+                first_email = emails_of_contacts[0]
+                rest_of_emails = emails_of_contacts[1:] if len(emails_of_contacts) > 1 else None
+                send_email(subject='RISK OF COVID',
+                    sender=('Contact Tracing App', current_app.config['MAIL_USERNAME']),
+                    recipients=[first_email],
+                    bcc=rest_of_emails,
+                    text_body=txt_body,
+                    html_body=html_body)
+
+            return {"message": "Added test successfully and contacts notified", "error": None, "data": {"id": new_test.id}}, 200
+        except Exception as e:
+            print(e)
+            abort(500)
 
 
 class ContactListAPI(Resource):

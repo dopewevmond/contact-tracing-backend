@@ -160,6 +160,13 @@ class User(SearchableMixin, db.Model):
             db.session.add(ver)
             db.session.commit()
 
+    def get_all_close_contacts_emails(self):
+        """Returns the emails of all close contacts of a user"""
+        emails = []
+        for user in self.knows.all():
+            emails.append(user.email)
+        return emails
+
 
 class Verification(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
