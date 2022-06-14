@@ -122,6 +122,7 @@ class User(SearchableMixin, db.Model):
     is_email_verified = db.Column(db.Boolean, default=False)
     is_number_verified = db.Column(db.Boolean, default=False)
     id_being_verified = db.Column(db.Boolean(), default=False)
+    image_link_for_verification = db.Column(db.String(500))
 
     knows = db.relationship(
         'User', secondary=known_by,
