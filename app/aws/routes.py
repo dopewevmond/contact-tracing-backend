@@ -75,7 +75,9 @@ class UploadImageToS3(Resource):
         picture = args['picture']
         
         filename = secure_filename(current_user.username + '.' + picture.filename.rsplit('.', 1)[1].lower())
+        ContentType = 'image/' + filename.rsplit('.', 1)[1].lower()
         print(filename)
+        print(ContentType)
         if not filename or filename == '':
             return {"error": "The file name was not uploaded", "data": None, "message": "Unable to upload file"}, 400
         if not allowed_file(filename):
@@ -86,10 +88,10 @@ class UploadImageToS3(Resource):
                 picture,
                 current_app.config['AWS_S3_BUCKET_NAME'],
                 filename,
-                ExtraArgs={'ACL': 'public-read'}
+                ExtraArgs={'ACL': 'public-read', 'ContentType': ContentType}
             )
             current_user.apply_for_verification()
-            current_user.image_link_for_verification = filename
+            current_user.image_link_for_verification = 'https://' + os.environ.get('AWS_S3_BUCKET_NAME') + '.s3.amazonaws.com/' + filename
             db.session.commit()
             return {"error": None, "data": {"id": current_user.id}, "message": "File uploaded successfully"}, 201
             
