@@ -8,6 +8,7 @@ from flask import current_app
 from app import db
 from botocore.exceptions import ClientError
 from app.auth.routes import token_required
+from app.models import User
 
 client_location = boto3.client('location')
 client_s3 = boto3.client('s3')
@@ -88,6 +89,8 @@ class UploadImageToS3(Resource):
                 ExtraArgs={'ACL': 'public-read'}
             )
             current_user.apply_for_verification()
+            current_user.image_link_for_verification = filename
+            db.session.commit()
             return {"error": None, "data": {"id": current_user.id}, "message": "File uploaded successfully"}, 201
             
         except ClientError as e:
