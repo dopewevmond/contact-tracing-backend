@@ -1,5 +1,6 @@
 from . import bp
 from ..models import Location, TestingCenter, User, Test
+from ..models import recent_locations as people_at_risk_emails
 from flask_restful import Api, Resource, abort, reqparse, fields, marshal_with, marshal
 from app.auth.routes import token_required, admin_access_required
 from app import db
@@ -89,12 +90,22 @@ class TestListAPI(Resource):
             db.session.add(new_test)
             db.session.commit()
             
+            # CONTACT TRACING ALGORITHM
+            # TO NOTIFY ALL CLOSE CONTACTS
+            # AND USERS WHO VISITED THE
+            # SAME LOCATIONS ON THE SAME
+            # DAY AS THE USER WHO JUST TESTED POSITIVE
+
             # send email to the users close contacts
             emails_of_contacts = current_user.get_all_close_contacts_emails()
+            # getting emails of people who visited locations the same day as the users
+            people_at_risk = people_at_risk_emails(user_id=current_user.id, user_email=current_user.email)
             txt_body = "This is an alert email from a contact tracing app. A close contact of yours contracted covid. Please self isolate and\
                 get tested too as you might be at risk"
             html_body = f'<p>{txt_body}</p>'
 
+            # add the two arrays to form one array
+            emails_of_contacts = [*emails_of_contacts, *people_at_risk]
             # since we want to send the emails with bcc so that the recipients will not find out
             # who else received an email. for privacy and security reasons
             if emails_of_contacts:

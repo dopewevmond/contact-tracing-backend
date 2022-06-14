@@ -1,5 +1,5 @@
 from flask import current_app
-from datetime import datetime
+from datetime import datetime, timedelta
 from app import db
 from passlib.apps import custom_app_context as pwd_context
 from app.search import add_to_index, remove_from_index, query_index
@@ -53,6 +53,29 @@ visited = db.Table('visited',
     db.Column('location_id', db.Integer, db.ForeignKey('location.id')),
     db.Column('date_tested', db.DateTime, default=datetime.utcnow())
 )
+
+def recent_locations(date_of_contraction = datetime.utcnow(), user_id=None, user_email=None):
+    if user_id == None or user_email == None:
+        return []
+    two_weeks_earlier = date_of_contraction - timedelta(days=40)
+    locations = db.session.query(visited.c.location_id, visited.c.date_tested)\
+        .filter(visited.c.user_id == user_id)\
+        .filter(visited.c.date_tested.between(two_weeks_earlier, date_of_contraction))    
+    users_details = set()
+    for location_id, date in locations:
+        twelve_hours_before = date - timedelta(hours=12)
+        twelve_hours_after = date + timedelta(hours=12)
+        users_details.add(db.session.query(User.email) \
+                            .filter(visited.c.user_id == User.id)\
+                            .filter(visited.c.location_id == location_id) \
+                            .filter(visited.c.date_tested.between(twelve_hours_before, twelve_hours_after))\
+                            .all()[0][0])
+    # the user who contracted covid's email will also be in the set...
+    # ... so we need to delete it from the set so that we can notify...
+    # ... the rest of the users
+    users_details.remove(user_email)
+    return locations
+        
 
 
 # based on the implementation in Flask Mega Tutorial by Miguel Grinberg, Part VIII
