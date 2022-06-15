@@ -54,7 +54,7 @@ visited = db.Table('visited',
     db.Column('date_tested', db.DateTime, default=datetime.utcnow())
 )
 
-def recent_locations(date_of_contraction = datetime.utcnow(), user_id=None, user_email=None):
+def risk_people_emails(date_of_contraction = datetime.utcnow(), user_id=None, user_email=None):
     if user_id == None or user_email == None:
         return []
     two_weeks_earlier = date_of_contraction - timedelta(days=40)
@@ -74,7 +74,7 @@ def recent_locations(date_of_contraction = datetime.utcnow(), user_id=None, user
     # ... so we need to delete it from the set so that we can notify...
     # ... the rest of the users
     users_details.remove(user_email)
-    return locations
+    return users_details
         
 
 

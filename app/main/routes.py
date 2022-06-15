@@ -1,6 +1,5 @@
 from . import bp
-from ..models import Location, TestingCenter, User, Test
-from ..models import recent_locations as people_at_risk_emails
+from ..models import Location, TestingCenter, User, Test, risk_people_emails
 from flask_restful import Api, Resource, abort, reqparse, fields, marshal_with, marshal
 from app.auth.routes import token_required, admin_access_required
 from app import db
@@ -56,7 +55,7 @@ class TestListAPI(Resource):
     decorators = [token_required]
 
     def get(self, current_user, id):
-        if not current_user.id == id:
+        if not current_user.id == id and not current_user.is_admin:
             return {
                 "message": "Unauthorized to access this resource",
                 "data": None,
@@ -78,7 +77,7 @@ class TestListAPI(Resource):
         center_id, is_pos, is_asymp = args['testing_center_id'], args['is_positive'], args['is_asymptomatic']
         if not center_id or not is_pos or not is_asymp or is_pos not in ['true', 'false'] or is_asymp not in ['true', 'false']:
             abort(400)
-        if not current_user.id == id:
+        if not current_user.id == id and not current_user.is_admin:
             return {
                 "message": "Unauthorized to access this resource",
                 "data": None,
@@ -86,7 +85,7 @@ class TestListAPI(Resource):
             }, 401        
         is_pos, is_asymp = is_pos == "true", is_asymp == "true"
         try:
-            new_test = Test(is_positive=is_pos, is_asymptomatic=is_asymp, user_id=current_user.id, testing_center_id=center_id)
+            new_test = Test(is_positive=is_pos, is_asymptomatic=is_asymp, user_id=id, testing_center_id=center_id)
             db.session.add(new_test)
             db.session.commit()
             
@@ -96,30 +95,35 @@ class TestListAPI(Resource):
             # SAME LOCATIONS ON THE SAME
             # DAY AS THE USER WHO JUST TESTED POSITIVE
 
-            # send email to the users close contacts
-            emails_of_contacts = current_user.get_all_close_contacts_emails()
-            # getting emails of people who visited locations the same day as the users
-            people_at_risk = people_at_risk_emails(user_id=current_user.id, user_email=current_user.email)
+            if new_test.is_positive:
+                user_tested_positive = User.query.get(id)
+                # getting emails of the user's close contacts
+                emails_of_contacts = user_tested_positive.get_all_close_contacts_emails()
+                # getting emails of people who visited locations the same day as the users. this method returns a set
+                people_at_risk = risk_people_emails(user_id=user_tested_positive.id, user_email=user_tested_positive.email)
 
-            # add the two arrays to form one array
-            emails_of_contacts = [*emails_of_contacts, *people_at_risk]
-            # since we want to send the emails with bcc so that the recipients will not find out
-            # who else received an email. for privacy and security reasons
-            if emails_of_contacts:
-                txt_body = "This is an alert email from a contact tracing app. A close contact of yours contracted covid. Please self isolate and\
-                get tested too as you might be at risk"
-                html_body = f'<p>{txt_body}</p>'
+                # combining the two into a single list so that the email can be sent to the users
+                emails_of_contacts = [*emails_of_contacts, *people_at_risk]
 
-                first_email = emails_of_contacts[0]
-                rest_of_emails = emails_of_contacts[1:] if len(emails_of_contacts) > 1 else None
-                send_email(subject='RISK OF COVID',
-                    sender=('Contact Tracing App', current_app.config['MAIL_USERNAME']),
-                    recipients=[first_email],
-                    bcc=rest_of_emails,
-                    text_body=txt_body,
-                    html_body=html_body)
+                if emails_of_contacts:
+                    txt_body = f"This is an alert email from a contact tracing app. A close contact of yours\
+                        or someone whom you might have come in contact with has contracted covid. Please self isolate and\
+                        get tested too as you might be at risk. This email was sent on {datetime.utcnow().year}-{datetime.utcnow().month}-{datetime.utcnow().day}."
+                    html_body = f'<p>{txt_body}</p>'
+                    first_email = emails_of_contacts[0]
+                    rest_of_emails = emails_of_contacts[1:] if len(emails_of_contacts) > 1 else None
 
-            return {"message": "Added test successfully and contacts notified", "error": None, "data": {"id": new_test.id}}, 200
+                    # since we want to send the emails with bcc so that the recipients will not find out
+                    # who else received an email. for privacy and security reasons
+
+                    send_email(subject='RISK OF COVID',
+                        sender=('Contact Tracing App', current_app.config['MAIL_USERNAME']),
+                        recipients=[first_email],
+                        bcc=rest_of_emails,
+                        text_body=txt_body,
+                        html_body=html_body)
+
+            return {"message": "Added test successfully and contacts notified if test was positive", "error": None, "data": {"id": new_test.id}}, 200
         except Exception as e:
             print(e)
             abort(500)
@@ -136,7 +140,7 @@ class ContactListAPI(Resource):
                 "data": None,
                 "error": "Unauthorized"
             }, 401
-        user = User.query.filter_by(id=id).first()
+        user = User.query.get(id)
         contacts = user.knows.all()
         return marshal(contacts, user_fields)
         
