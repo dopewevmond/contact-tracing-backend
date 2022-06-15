@@ -100,15 +100,16 @@ class TestListAPI(Resource):
             emails_of_contacts = current_user.get_all_close_contacts_emails()
             # getting emails of people who visited locations the same day as the users
             people_at_risk = people_at_risk_emails(user_id=current_user.id, user_email=current_user.email)
-            txt_body = "This is an alert email from a contact tracing app. A close contact of yours contracted covid. Please self isolate and\
-                get tested too as you might be at risk"
-            html_body = f'<p>{txt_body}</p>'
 
             # add the two arrays to form one array
             emails_of_contacts = [*emails_of_contacts, *people_at_risk]
             # since we want to send the emails with bcc so that the recipients will not find out
             # who else received an email. for privacy and security reasons
             if emails_of_contacts:
+                txt_body = "This is an alert email from a contact tracing app. A close contact of yours contracted covid. Please self isolate and\
+                get tested too as you might be at risk"
+                html_body = f'<p>{txt_body}</p>'
+
                 first_email = emails_of_contacts[0]
                 rest_of_emails = emails_of_contacts[1:] if len(emails_of_contacts) > 1 else None
                 send_email(subject='RISK OF COVID',
