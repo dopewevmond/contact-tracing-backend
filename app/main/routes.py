@@ -115,13 +115,13 @@ class TestListAPI(Resource):
                         text_body=txt_body,
                         html_body=html_body)
 
-            return {"message": "Added test successfully and contacts notified if test was positive", "error": None, "data": {"id": new_test.id}}, 200
         except Exception as e:
             print(e)
             db.session.rollback()
             abort(500)
         finally:
             db.session.close()
+        return {"message": "Added test successfully and contacts notified if test was positive", "error": None, "data": {"id": new_test.id}}, 200
 
 
 class ContactListAPI(Resource):
