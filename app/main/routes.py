@@ -56,7 +56,7 @@ class TestListAPI(Resource):
 
     def get(self, current_user, id):
         if not current_user.id == id and not current_user.is_admin:
-            abort(401)
+            abort(401, error='Unauthorized', message='User is unauthorized to perform this action')
         tests = Test.query.filter_by(user_id = id).all()      
         deserialized = []
         for test in tests:
@@ -72,9 +72,9 @@ class TestListAPI(Resource):
         args = self.reqparse.parse_args()
         center_id, is_pos, is_asymp = args['testing_center_id'], args['is_positive'], args['is_asymptomatic']
         if not center_id or not is_pos or not is_asymp or is_pos not in ['true', 'false'] or is_asymp not in ['true', 'false']:
-            abort(400)
+            abort(400, error='Bad request', message='Bad request')
         if not current_user.id == id and not current_user.is_admin:
-            abort(401)     
+            abort(401, error='Unauthorized', message='User is unauthorized to perform this action')
         is_pos, is_asymp = is_pos == "true", is_asymp == "true"
         try:
             new_test = Test(is_positive=is_pos, is_asymptomatic=is_asymp, user_id=id, testing_center_id=center_id)
@@ -118,7 +118,7 @@ class TestListAPI(Resource):
         except Exception as e:
             print(e)
             db.session.rollback()
-            abort(500)
+            abort(500, error='Internal server error', message='Something went wrong')
         finally:
             db.session.close()
         return {"message": "Added test successfully and contacts notified if test was positive", "error": None, "data": {"id": new_test.id}}, 200
@@ -130,7 +130,7 @@ class ContactListAPI(Resource):
 
     def get(self, current_user, id):
         if not current_user.id == id:
-            abort(401)
+            abort(401, error='Unauthorized', message='User is unauthorized to perform this action')
         user = User.query.get(id)
         contacts = user.knows.all()
         return marshal(contacts, user_fields)
@@ -143,19 +143,19 @@ class ContactListAPI(Resource):
         args = self.reqparse.parse_args()
         contact_id = args['contact_id']
         if contact_id is None:
-            abort(400)
+            abort(400, error='Bad request', message='Bad request')
         if not current_user.id == id:
-            abort(401)
+            abort(401, error='Unauthorized', message='User is unauthorized to perform this action')
         user_to_add_to_contacts = User.query.get(contact_id)
         if not user_to_add_to_contacts or user_to_add_to_contacts.is_known_by(current_user):
-            abort(400)
+            abort(400, error='Bad request', message='Bad request')
         try:
             current_user.knows.append(user_to_add_to_contacts)
             db.session.add(current_user)
             db.session.commit()
         except Exception as e:
             print(e)
-            abort(500)
+            abort(500, error='Internal server error', message='Something went wrong')
         finally:
             db.session.close()
         return {"message": "Added contact successfully", "error": None, "data": {"id": contact_id}}, 200
@@ -167,17 +167,17 @@ class ContactAPI(Resource):
 
     def delete(self, current_user, id, contact_id):
         if not current_user.id == id:
-            abort(401)
+            abort(401, error='Unauthorized', message='User is unauthorized to perform this action')
         user_to_remove = User.query.get(contact_id)
         if not user_to_remove or not user_to_remove.is_known_by(current_user):
-            abort(400)    
+            abort(400, error='Bad request', message='Bad request')
         try:
             current_user.knows.remove(user_to_remove)
             db.session.add(current_user)
             db.session.commit()
         except Exception as e:
             print(e)
-            abort(500)
+            abort(500, error='Internal server error', message='Something went wrong')
         finally:
             db.session.close()
         return {"message": "Removed contact successfully", "error": None, "data": None}, 200
@@ -189,7 +189,7 @@ class VisitedListAPI(Resource):
 
     def get(self, current_user, id):
         if not current_user.id == id:    
-            abort(401)
+            abort(401, error='Unauthorized', message='User is unauthorized to perform this action')
         visited_locations = current_user.visited_locations().all()
         return marshal(visited_locations, visited_fields), 200
 
@@ -199,9 +199,9 @@ class VisitedListAPI(Resource):
         args = self.reqparse.parse_args()
         location_id = args['location_id']
         if location_id is None:
-            abort(400)
+            abort(400, error='Bad request', message='Bad request')
         if not current_user.id == id:
-            abort(401)
+            abort(401, error='Unauthorized', message='User is unauthorized to perform this action')
         try:
             location_to_add = Location.query.get(location_id)
             current_user.visits.append(location_to_add)
@@ -209,8 +209,7 @@ class VisitedListAPI(Resource):
             db.session.commit()
             # datetime_of_visit = db.session.query()
         except Exception as e:
-            print(e)
-            abort(500, message='this is my custom error', error='Internal server error')
+            abort(500, error='Internal server error', message='Something went wrong. The location may have been deleted')
         finally:
             db.session.close()
         return {"message": "Successfully added location to history", "error": None, "data": {"id": location_id}}, 200
@@ -222,17 +221,17 @@ class VisitedAPI(Resource):
 
     def delete(self, current_user, id, location_id):
         if not current_user.id == id:
-            abort(401)
+            abort(401, error='Unauthorized', message='User is unauthorized to perform this action')
         location_to_remove = Location.query.get(location_id)
         if not location_to_remove or not current_user in location_to_remove.wasvisitedby:
-            abort(400)  
+            abort(400, error='Bad request', message='Bad request')
         try:
             current_user.visits.remove(location_to_remove)
             db.session.add(current_user)
             db.session.commit()
         except Exception as e:
             print(e)
-            abort(500)
+            abort(400, error='Bad request', message='Bad request')
         finally:
             db.session.close()
         return {"message": "Removed location successfully", "error": None, "data": {"id": location_id}}, 200
@@ -246,11 +245,11 @@ class SearchLocationAPI(Resource):
         self.reqparse.add_argument('lon', type=str, required=True, help='longitude of location to search not provided', location='args')
         args = self.reqparse.parse_args()
         if not args['lat'] or not args['lon']:
-            abort(400)
+            abort(400, error='Bad request', message='Bad request')
         latitude, longitude = args['lat'], args['lon']
         location = Location.query.filter_by(longitude=float(longitude)).filter_by(latitude=float(latitude)).first()
         if location is None:
-            abort(404)
+            abort(404, error='Not found', message='Not found')
         return {"message": "Location found", "data": {"id": location.id}, "error": None}, 200
 
 
@@ -268,17 +267,17 @@ class LocationListAPI(Resource):
         self.reqparse.add_argument('name', type=str, required=True, help='Name of location not provided', location='json')
         args = self.reqparse.parse_args()
         if not args['lat'] or not args['lon'] or not args['name']:
-            abort(400)
+            abort(400, error='Bad request', message='Bad request')
         try:
             lat, lon, name = float(args['lat']), float(args['lon']), args['name']
             if Location.search_by_lat_and_lon(lat, lon).count() > 0:
-                abort(400)
+                abort(400, error='Bad request', message='Bad request')
             location = Location(latitude=lat, longitude=lon, location_name=name)
             db.session.add(location)
             db.session.commit()
         except Exception as e:
             print(e)
-            abort(500)
+            abort(400, error='Bad request', message='Bad request')
         finally:
             db.session.close()
         return {"message": "Location added successfully", "data": {"id": location.id}, "error": None}, 200
@@ -289,19 +288,19 @@ class UserAPI(Resource):
     decorators = [token_required]
     def get(self, current_user, id):
         if not current_user.id == id:
-            abort(401)
+            abort(401, error='Unauthorized', message='User is unauthorized to perform this action')
         user = User.query.get(id)
         if not user:
-            abort(404)
+            abort(404, error='Not found', message='Not found')
         return {"message": "User found", "error": None, "data": marshal(user, user_fields)}
 
     
     def put(self, current_user, id):
         if not current_user.id == id or current_user.is_verified:
-            abort(401)
+            abort(401, error='Unauthorized', message='User is unauthorized to perform this action')
         user = User.query.get(id)
         if not user:
-            abort(404)
+            abort(404, error='Not found', message='Not found')
         self.reqparse = reqparse.RequestParser()
         self.reqparse.add_argument('first_name', type=str, help='Provide a valid first name', location='json')
         self.reqparse.add_argument('other_names', type=str, help='Provide a valid middle name', location='json')
@@ -331,7 +330,7 @@ class UserAPI(Resource):
             }, 200
         except Exception as e:
             print(e)
-            abort(500)
+            abort(500, error='Internal server error', message='Something went wrong')
         finally:
             db.session.close()
 
@@ -350,7 +349,7 @@ class SearchUserAPI(Resource):
                 return {"message": "Users found", "error": None, "data": {"count": total, "users": marshal(found_users, user_fields_min)}}, 200
             return {"message": "No users found", "error": None, "data": {"count": total, "users": []}}, 200
         except Exception as e:
-            abort(400)
+            abort(400, error='Bad request', message='Bad request')
         finally:
             db.session.close()
 
@@ -368,7 +367,7 @@ class SearchTestingCenterAPI(Resource):
                 return {"message": "Testing centers found", "error": None, "data": {"count": total, "testing_centers": marshal(found_testing_centers, testing_center_fields)}}, 200
             return {"message": "No testing centers found", "error": None, "data": {"count": total, "testing_centers": []}}, 200
         except Exception as e:
-            abort(400)
+            abort(400, error='Bad request', message='Bad request')
         finally:
             db.session.close()
 
