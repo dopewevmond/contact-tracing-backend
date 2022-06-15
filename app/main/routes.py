@@ -56,11 +56,7 @@ class TestListAPI(Resource):
 
     def get(self, current_user, id):
         if not current_user.id == id and not current_user.is_admin:
-            return {
-                "message": "Unauthorized to access this resource",
-                "data": None,
-                "error": "Unauthorized"
-            }, 401,
+            abort(401)
         tests = Test.query.filter_by(user_id = id).all()      
         deserialized = []
         for test in tests:
@@ -78,11 +74,7 @@ class TestListAPI(Resource):
         if not center_id or not is_pos or not is_asymp or is_pos not in ['true', 'false'] or is_asymp not in ['true', 'false']:
             abort(400)
         if not current_user.id == id and not current_user.is_admin:
-            return {
-                "message": "Unauthorized to access this resource",
-                "data": None,
-                "error": "Unauthorized"
-            }, 401        
+            abort(401)     
         is_pos, is_asymp = is_pos == "true", is_asymp == "true"
         try:
             new_test = Test(is_positive=is_pos, is_asymptomatic=is_asymp, user_id=id, testing_center_id=center_id)
@@ -126,7 +118,10 @@ class TestListAPI(Resource):
             return {"message": "Added test successfully and contacts notified if test was positive", "error": None, "data": {"id": new_test.id}}, 200
         except Exception as e:
             print(e)
+            db.session.rollback()
             abort(500)
+        finally:
+            db.session.close()
 
 
 class ContactListAPI(Resource):
@@ -135,11 +130,7 @@ class ContactListAPI(Resource):
 
     def get(self, current_user, id):
         if not current_user.id == id:
-            return {
-                "message": "Unauthorized to access this resource",
-                "data": None,
-                "error": "Unauthorized"
-            }, 401
+            abort(401)
         user = User.query.get(id)
         contacts = user.knows.all()
         return marshal(contacts, user_fields)
@@ -154,21 +145,19 @@ class ContactListAPI(Resource):
         if contact_id is None:
             abort(400)
         if not current_user.id == id:
-            return {
-                "message": "Unauthorized to perform this operation",
-                "data": None,
-                "error": "Unauthorized"
-            }, 401
+            abort(401)
         user_to_add_to_contacts = User.query.get(contact_id)
         if not user_to_add_to_contacts or user_to_add_to_contacts.is_known_by(current_user):
-            return {
-                "message": "Bad request",
-                "data": None,
-                "error": "Bad request"
-        }, 400
-        current_user.knows.append(user_to_add_to_contacts)
-        db.session.add(current_user)
-        db.session.commit()
+            abort(400)
+        try:
+            current_user.knows.append(user_to_add_to_contacts)
+            db.session.add(current_user)
+            db.session.commit()
+        except Exception as e:
+            print(e)
+            abort(500)
+        finally:
+            db.session.close()
         return {"message": "Added contact successfully", "error": None, "data": {"id": contact_id}}, 200
 
 
@@ -178,21 +167,19 @@ class ContactAPI(Resource):
 
     def delete(self, current_user, id, contact_id):
         if not current_user.id == id:
-            return {
-                "message": "Unauthorized to perform this operation",
-                "data": None,
-                "error": "Unauthorized"
-            }, 401
+            abort(401)
         user_to_remove = User.query.get(contact_id)
         if not user_to_remove or not user_to_remove.is_known_by(current_user):
-            return {
-                "message": "Bad request",
-                "data": None,
-                "error": "Bad request"
-        }, 400     
-        current_user.knows.remove(user_to_remove)
-        db.session.add(current_user)
-        db.session.commit()
+            abort(400)    
+        try:
+            current_user.knows.remove(user_to_remove)
+            db.session.add(current_user)
+            db.session.commit()
+        except Exception as e:
+            print(e)
+            abort(500)
+        finally:
+            db.session.close()
         return {"message": "Removed contact successfully", "error": None, "data": None}, 200
 
 
@@ -202,11 +189,7 @@ class VisitedListAPI(Resource):
 
     def get(self, current_user, id):
         if not current_user.id == id:    
-            return {
-                    "message": "Unauthorized to access this resource",
-                    "data": None,
-                    "error": "Unauthorized"
-            }, 401
+            abort(401)
         visited_locations = current_user.visited_locations().all()
         return marshal(visited_locations, visited_fields), 200
 
@@ -218,15 +201,17 @@ class VisitedListAPI(Resource):
         if location_id is None:
             abort(400)
         if not current_user.id == id:
-            return {
-                "message": "Unauthorized to perform this operation",
-                "data": None,
-                "error": "Unauthorized"
-            }, 401
-        location_to_add = Location.query.get(location_id)
-        current_user.visits.append(location_to_add)
-        db.session.add(current_user)
-        db.session.commit()
+            abort(401)
+        try:
+            location_to_add = Location.query.get(location_id)
+            current_user.visits.append(location_to_add)
+            db.session.add(current_user)
+            db.session.commit()
+        except Exception as e:
+            print(e)
+            abort(500)
+        finally:
+            db.session.close()
         return {"message": "Successfully added location to history", "error": None, "data": {"id": location_id}}, 200
 
 
@@ -236,21 +221,19 @@ class VisitedAPI(Resource):
 
     def delete(self, current_user, id, location_id):
         if not current_user.id == id:
-            return {
-                "message": "Unauthorized to perform this operation",
-                "data": None,
-                "error": "Unauthorized"
-            }, 401
+            abort(401)
         location_to_remove = Location.query.get(location_id)
         if not location_to_remove or not current_user in location_to_remove.wasvisitedby:
-            return {
-                "message": "Bad request",
-                "data": None,
-                "error": "Bad request"
-            }, 400    
-        current_user.visits.remove(location_to_remove)
-        db.session.add(current_user)
-        db.session.commit()
+            abort(400)  
+        try:
+            current_user.visits.remove(location_to_remove)
+            db.session.add(current_user)
+            db.session.commit()
+        except Exception as e:
+            print(e)
+            abort(500)
+        finally:
+            db.session.close()
         return {"message": "Removed location successfully", "error": None, "data": {"id": location_id}}, 200
 
 
@@ -266,7 +249,7 @@ class SearchLocationAPI(Resource):
         latitude, longitude = args['lat'], args['lon']
         location = Location.query.filter_by(longitude=float(longitude)).filter_by(latitude=float(latitude)).first()
         if location is None:
-            return {"message": "Location not found", "data": None, "error": "Not found"}, 404
+            abort(404)
         return {"message": "Location found", "data": {"id": location.id}, "error": None}, 200
 
 
@@ -288,14 +271,13 @@ class LocationListAPI(Resource):
         try:
             lat, lon, name = float(args['lat']), float(args['lon']), args['name']
             if Location.search_by_lat_and_lon(lat, lon).count() > 0:
-                return {"message": "Location is already in database", "error": "Bad request", "data": None}, 400
+                abort(400)
             location = Location(latitude=lat, longitude=lon, location_name=name)
             db.session.add(location)
             db.session.commit()
         except Exception as e:
-            db.session.rollback()
             print(e)
-            abort(400)
+            abort(500)
         finally:
             db.session.close()
         return {"message": "Location added successfully", "data": {"id": location.id}, "error": None}, 200
@@ -348,11 +330,9 @@ class UserAPI(Resource):
             }, 200
         except Exception as e:
             print(e)
-            return {
-                "message": "Something went wrong",
-                "error": str(e),
-                "data": None
-            }, 400
+            abort(500)
+        finally:
+            db.session.close()
 
 
 class SearchUserAPI(Resource):
@@ -369,7 +349,9 @@ class SearchUserAPI(Resource):
                 return {"message": "Users found", "error": None, "data": {"count": total, "users": marshal(found_users, user_fields_min)}}, 200
             return {"message": "No users found", "error": None, "data": {"count": total, "users": []}}, 200
         except Exception as e:
-            return {"message": "An error occured", "error": "Bad request", "data": None}, 400
+            abort(400)
+        finally:
+            db.session.close()
 
 class SearchTestingCenterAPI(Resource):
     """/testing-centers/search - search_testing_centers"""
@@ -385,8 +367,9 @@ class SearchTestingCenterAPI(Resource):
                 return {"message": "Testing centers found", "error": None, "data": {"count": total, "testing_centers": marshal(found_testing_centers, testing_center_fields)}}, 200
             return {"message": "No testing centers found", "error": None, "data": {"count": total, "testing_centers": []}}, 200
         except Exception as e:
-            return {"message": "An error occured", "error": "Bad request", "data": None}, 400
-
+            abort(400)
+        finally:
+            db.session.close()
 
 api.add_resource(ContactListAPI, '/users/<int:id>/contacts', endpoint='contacts_list')
 api.add_resource(ContactAPI, '/users/<int:id>/contacts/<int:contact_id>', endpoint='contact')
