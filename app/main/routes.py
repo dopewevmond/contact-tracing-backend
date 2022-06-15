@@ -1,11 +1,13 @@
 from . import bp
 from ..models import Location, TestingCenter, User, Test, risk_people_emails
+from ..models import visited as Visited
 from flask_restful import Api, Resource, abort, reqparse, fields, marshal_with, marshal
 from app.auth.routes import token_required, admin_access_required
 from app import db
 from datetime import datetime
 from flask import current_app
 from app.email import send_email
+from dateutil import parser
 
 api = Api(bp)
 
@@ -69,15 +71,16 @@ class TestListAPI(Resource):
         self.reqparse.add_argument('testing_center_id', type=int, required=True, help='ID of testing center missing', location='json')
         self.reqparse.add_argument('is_positive', type=str, required=True, help='Add value for is_positive. either true or false', location='json')
         self.reqparse.add_argument('is_asymptomatic', type=str, required=True, help='Add value for is_positive. either true or false', location='json')
+        self.reqparse.add_argument('date', type=str, required=True, help='Date of test. Should be ISO string format', location='json')
         args = self.reqparse.parse_args()
-        center_id, is_pos, is_asymp = args['testing_center_id'], args['is_positive'], args['is_asymptomatic']
+        center_id, is_pos, is_asymp, date = args['testing_center_id'], args['is_positive'], args['is_asymptomatic'], args['date']
         if not center_id or not is_pos or not is_asymp or is_pos not in ['true', 'false'] or is_asymp not in ['true', 'false']:
             abort(400, error='Bad request', message='Bad request')
         if not current_user.id == id and not current_user.is_admin:
             abort(401, error='Unauthorized', message='User is unauthorized to perform this action')
         is_pos, is_asymp = is_pos == "true", is_asymp == "true"
         try:
-            new_test = Test(is_positive=is_pos, is_asymptomatic=is_asymp, user_id=id, testing_center_id=center_id)
+            new_test = Test(is_positive=is_pos, is_asymptomatic=is_asymp, user_id=id, testing_center_id=center_id, date=parser.parse(date))
             db.session.add(new_test)
             db.session.commit()
             
@@ -205,10 +208,9 @@ class VisitedListAPI(Resource):
         try:
             location_to_add = Location.query.get(location_id)
             current_user.visits.append(location_to_add)
-            db.session.add(current_user)
             db.session.commit()
-            # datetime_of_visit = db.session.query()
         except Exception as e:
+            print(e)
             abort(500, error='Internal server error', message='Something went wrong. The location may have been deleted')
         finally:
             db.session.close()

@@ -58,7 +58,7 @@ visited = db.Table('visited',
 def risk_people_emails(date_of_contraction = datetime.utcnow(), user_id=None, user_email=None):
     if user_id == None or user_email == None:
         return []
-    two_weeks_earlier = date_of_contraction - timedelta(days=40)
+    two_weeks_earlier = date_of_contraction - timedelta(days=14)
     locations = db.session.query(visited.c.location_id, visited.c.date_visited)\
         .filter(visited.c.user_id == user_id)\
         .filter(visited.c.date_visited.between(two_weeks_earlier, date_of_contraction))    
