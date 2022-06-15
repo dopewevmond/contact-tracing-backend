@@ -29,14 +29,15 @@ user_fields =  {
 }
 
 class TestingCenterListAPI(Resource):
-    def get(self):
+    decorators = [admin_access_required]
+    def get(self, current_user):
         """
         Returns all testing centers
         """
         centers = TestingCenter.query.all()
         return marshal(centers, testing_center_fields), 200
 
-    def post(self):
+    def post(self, current_user):
         """
         Allow admins to add a new testing center
         """
@@ -57,13 +58,14 @@ class TestingCenterListAPI(Resource):
 
 
 class TestingCenterAPI(Resource):
-    def get(self, id):
+    decorators = [admin_access_required]
+    def get(self, current_user, id):
         center = TestingCenter.query.get(id)
         if not center:
             abort(404)
         return marshal(center, testing_center_fields)
 
-    def put(self, id):
+    def put(self, current_user, id):
         center = TestingCenter.query.get(id)
         if not center:
             abort(404)
@@ -93,7 +95,7 @@ class TestingCenterAPI(Resource):
                 "message": str(e)
             }, 500
 
-    def delete(self, id):
+    def delete(self, current_user, id):
         center = TestingCenter.query.get(id)
         if not center:
             abort(404)
