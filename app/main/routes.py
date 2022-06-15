@@ -29,7 +29,7 @@ user_fields_min =  {
 }
 visited_fields = {
     'location_name': fields.String,
-    'date_tested': fields.String
+    'date_visited': fields.String
 }
 
 location_fields = {
@@ -207,9 +207,10 @@ class VisitedListAPI(Resource):
             current_user.visits.append(location_to_add)
             db.session.add(current_user)
             db.session.commit()
+            # datetime_of_visit = db.session.query()
         except Exception as e:
             print(e)
-            abort(500)
+            abort(500, message='this is my custom error', error='Internal server error')
         finally:
             db.session.close()
         return {"message": "Successfully added location to history", "error": None, "data": {"id": location_id}}, 200
