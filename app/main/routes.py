@@ -1,6 +1,6 @@
 from . import bp
 from ..models import Location, TestingCenter, User, Test, risk_people_emails
-from ..models import visited as Visited
+from ..models import Visited
 from flask_restful import Api, Resource, abort, reqparse, fields, marshal_with, marshal
 from app.auth.routes import token_required, admin_access_required
 from app import db
