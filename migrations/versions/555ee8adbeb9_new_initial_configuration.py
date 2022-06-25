@@ -1,8 +1,8 @@
-"""new configuration
+"""new initial configuration
 
-Revision ID: d8fb9ac332a6
+Revision ID: 555ee8adbeb9
 Revises: 
-Create Date: 2022-06-15 23:21:07.794170
+Create Date: 2022-06-16 15:45:12.105634
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'd8fb9ac332a6'
+revision = '555ee8adbeb9'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -30,6 +30,8 @@ def upgrade():
     sa.Column('name', sa.String(length=140), nullable=True),
     sa.Column('region', sa.String(length=3), nullable=True),
     sa.Column('constituency', sa.String(length=140), nullable=True),
+    sa.Column('latitude', sa.Integer(), nullable=True),
+    sa.Column('longitude', sa.Integer(), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('user',
@@ -81,12 +83,13 @@ def upgrade():
     sa.PrimaryKeyConstraint('user_id')
     )
     op.create_table('visited',
-    sa.Column('user_id', sa.Integer(), nullable=False),
-    sa.Column('location_id', sa.Integer(), nullable=False),
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('user_id', sa.Integer(), nullable=True),
+    sa.Column('location_id', sa.Integer(), nullable=True),
     sa.Column('date_visited', sa.DateTime(), nullable=True),
     sa.ForeignKeyConstraint(['location_id'], ['location.id'], ),
     sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
-    sa.PrimaryKeyConstraint('user_id', 'location_id')
+    sa.PrimaryKeyConstraint('id')
     )
     # ### end Alembic commands ###
 

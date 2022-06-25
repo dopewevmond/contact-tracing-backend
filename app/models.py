@@ -50,27 +50,33 @@ db.event.listen(db.session, 'after_commit', SearchableMixin.after_commit)
 
 
 class Visited(db.Model):
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
-    location_id = db.Column(db.Integer, db.ForeignKey('location.id'), primary_key=True)
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    location_id = db.Column(db.Integer, db.ForeignKey('location.id'))
     date_visited = db.Column(db.DateTime, default=func.now())
+    visited_by = db.relationship('User', back_populates='visits')
+    location_visited = db.relationship('Location', back_populates='has_been_visited_by')
 
 
 def risk_people_emails(date_of_contraction = datetime.utcnow(), user_id=None, user_email=None):
     if user_id == None or user_email == None:
-        return []
+        return set()
     two_weeks_earlier = date_of_contraction - timedelta(days=14)
     locations = db.session.query(Visited.location_id, Visited.date_visited)\
         .filter(Visited.user_id == user_id)\
-        .filter(Visited.date_visited.between(two_weeks_earlier, date_of_contraction))    
+        .filter(Visited.date_visited.between(two_weeks_earlier, date_of_contraction))\
+        .all()
     users_details = set()
     for location_id, date in locations:
         twelve_hours_before = date - timedelta(hours=12)
         twelve_hours_after = date + timedelta(hours=12)
-        users_details.add(db.session.query(User.email) \
+        users_emails = db.session.query(User.email) \
                             .filter(Visited.user_id == User.id)\
                             .filter(Visited.location_id == location_id) \
                             .filter(Visited.date_visited.between(twelve_hours_before, twelve_hours_after))\
-                            .all()[0][0])
+                            .all()
+        for email in users_emails:
+            users_details.add(email[0])
     # the user who contracted covid's email will also be in the set...
     # ... so we need to delete it from the set so that we can notify...
     # ... the rest of the users
@@ -133,7 +139,7 @@ class User(SearchableMixin, db.Model):
     
     # to add a new location to a user's history we can just call, <User >.visits.append(<Location >)
     # the lazy='dynamic' was added to all backrefs to allow the count() method to be called on the queries
-    visits = db.relationship('Location', secondary=Visited, backref=db.backref('wasvisitedby', lazy='dynamic'), lazy='dynamic')
+    visits = db.relationship('Visited', back_populates='visited_by')
 
     verification_requests = db.relationship('Verification', backref='author', lazy='dynamic')
 
@@ -204,7 +210,8 @@ class TestingCenter(SearchableMixin, db.Model):
     name = db.Column(db.String(140))
     region = db.Column(db.String(3))
     constituency = db.Column(db.String(140))
-    location = db.relationship('Test', backref='location', lazy='dynamic')
+    latitude = db.Column(db.Integer)
+    longitude = db.Column(db.Integer)
 
     @classmethod
     def search_by_region(cls, region):
@@ -215,6 +222,7 @@ class Location(db.Model):
     latitude = db.Column(db.Integer)
     longitude = db.Column(db.Integer)
     location_name = db.Column(db.String(120))
+    has_been_visited_by = db.relationship('Visited', back_populates='location_visited')
 
     @classmethod
     def search_by_lat_and_lon(cls, lat, lon):

@@ -56,16 +56,20 @@ class TestListAPI(Resource):
     """/users/{id}/tests - tests_list"""
     decorators = [token_required]
 
+    # TESTED
     def get(self, current_user, id):
         if not current_user.id == id and not current_user.is_admin:
             abort(401, error='Unauthorized', message='User is unauthorized to perform this action')
         tests = Test.query.filter_by(user_id = id).all()      
         deserialized = []
         for test in tests:
-            test_obj = {"id": test.id, "date": test.date, "location": test.location.name}
+            location_of_test = TestingCenter.query.filter_by(id = test.testing_center_id).first()
+            test_obj = {"id": test.id, "date": test.date, "location": location_of_test.name}
             deserialized.append(test_obj)
         return marshal(deserialized, test_fields)
 
+
+    # TESTED
     def post(self, current_user, id):
         self.reqparse = reqparse.RequestParser()
         self.reqparse.add_argument('testing_center_id', type=int, required=True, help='ID of testing center missing', location='json')
@@ -76,12 +80,18 @@ class TestListAPI(Resource):
         center_id, is_pos, is_asymp, date = args['testing_center_id'], args['is_positive'], args['is_asymptomatic'], args['date']
         if not center_id or not is_pos or not is_asymp or is_pos not in ['true', 'false'] or is_asymp not in ['true', 'false']:
             abort(400, error='Bad request', message='Bad request')
+
+        # allow only authorized users
         if not current_user.id == id and not current_user.is_admin:
             abort(401, error='Unauthorized', message='User is unauthorized to perform this action')
         is_pos, is_asymp = is_pos == "true", is_asymp == "true"
+
+        success = True
         try:
             new_test = Test(is_positive=is_pos, is_asymptomatic=is_asymp, user_id=id, testing_center_id=center_id, date=parser.parse(date))
             db.session.add(new_test)
+            db.session.flush()
+            new_test_id = new_test.id
             db.session.commit()
             
             # CONTACT TRACING ALGORITHM
@@ -93,12 +103,14 @@ class TestListAPI(Resource):
             if new_test.is_positive:
                 user_tested_positive = User.query.get(id)
                 # getting emails of the user's close contacts
-                emails_of_contacts = user_tested_positive.get_all_close_contacts_emails()
+                emails_of_close_contacts = set().union(set(user_tested_positive.get_all_close_contacts_emails()))
                 # getting emails of people who visited locations the same day as the users. this method returns a set
-                people_at_risk = risk_people_emails(user_id=user_tested_positive.id, user_email=user_tested_positive.email)
+                people_at_risk = risk_people_emails(date_of_contraction=parser.parse(date), user_id=user_tested_positive.id, user_email=user_tested_positive.email)
 
                 # combining the two into a single list so that the email can be sent to the users
-                emails_of_contacts = [*emails_of_contacts, *people_at_risk]
+                emails_of_contacts = emails_of_close_contacts.union(people_at_risk)
+                # after the union, the set is converted back to a list
+                emails_of_contacts = list(emails_of_contacts)
 
                 if emails_of_contacts:
                     txt_body = f"This is an alert email from a contact tracing app. A close contact of yours\
@@ -121,68 +133,84 @@ class TestListAPI(Resource):
         except Exception as e:
             print(e)
             db.session.rollback()
-            abort(500, error='Internal server error', message='Something went wrong')
+            success = False
         finally:
             db.session.close()
-        return {"message": "Added test successfully and contacts notified if test was positive", "error": None, "data": {"id": new_test.id}}, 200
+        if not success:
+            abort(500, error='Internal server error', message='Something went wrong')
+        return {"message": "Added test successfully and contacts notified if test was positive", "error": None, "data": {"id": new_test_id}}, 201
 
 
 class ContactListAPI(Resource):
     """/users/{id}/contacts - contacts_list"""
     decorators = [token_required]    
 
+    # TESTED
     def get(self, current_user, id):
-        if not current_user.id == id:
+        if not current_user.id == id and not current_user.is_admin:
             abort(401, error='Unauthorized', message='User is unauthorized to perform this action')
         user = User.query.get(id)
         contacts = user.knows.all()
         return marshal(contacts, user_fields)
         
 
-
+    # TESTED
     def post(self, current_user, id):
         self.reqparse = reqparse.RequestParser()
         self.reqparse.add_argument('contact_id', type=int, help='ID of user to add was not found', location='json')
         args = self.reqparse.parse_args()
         contact_id = args['contact_id']
-        if contact_id is None:
-            abort(400, error='Bad request', message='Bad request')
-        if not current_user.id == id:
+        
+        if not current_user.id == id and not current_user.is_admin:
             abort(401, error='Unauthorized', message='User is unauthorized to perform this action')
+        
+        if contact_id is None:
+            abort(400, error='Bad request', message='Bad request')  
+        user = User.query.get(id)
         user_to_add_to_contacts = User.query.get(contact_id)
-        if not user_to_add_to_contacts or user_to_add_to_contacts.is_known_by(current_user):
+        if not user or not user_to_add_to_contacts or user_to_add_to_contacts.is_known_by(user):
             abort(400, error='Bad request', message='Bad request')
+
+        success = True
         try:
-            current_user.knows.append(user_to_add_to_contacts)
-            db.session.add(current_user)
+            user.knows.append(user_to_add_to_contacts)
             db.session.commit()
         except Exception as e:
             print(e)
-            abort(500, error='Internal server error', message='Something went wrong')
+            db.session.rollback()
+            success = False
         finally:
             db.session.close()
-        return {"message": "Added contact successfully", "error": None, "data": {"id": contact_id}}, 200
+        if not success:
+            abort(500, error='Internal server error', message='Something went wrong')
+        return {"message": "Added contact successfully", "error": None, "data": {"id": contact_id}}, 201
 
 
 class ContactAPI(Resource):
     """/users/{id}/contacts/{contact_id} - contact"""
     decorators = [token_required]
 
+    # TESTED
     def delete(self, current_user, id, contact_id):
-        if not current_user.id == id:
+        if not current_user.id == id and not current_user.is_admin:
             abort(401, error='Unauthorized', message='User is unauthorized to perform this action')
+        user = User.query.get(id)
         user_to_remove = User.query.get(contact_id)
-        if not user_to_remove or not user_to_remove.is_known_by(current_user):
+        if not user or not user_to_remove or not user_to_remove.is_known_by(user):
             abort(400, error='Bad request', message='Bad request')
+
+        success = True
         try:
-            current_user.knows.remove(user_to_remove)
-            db.session.add(current_user)
+            user.knows.remove(user_to_remove)
             db.session.commit()
         except Exception as e:
             print(e)
-            abort(500, error='Internal server error', message='Something went wrong')
+            db.session.rollback()
+            success = False
         finally:
             db.session.close()
+        if not success:
+            abort(500, error='Internal server error', message='Something went wrong')
         return {"message": "Removed contact successfully", "error": None, "data": None}, 200
 
 
@@ -190,57 +218,84 @@ class VisitedListAPI(Resource):
     """/users/{id}/visited - visited_list"""
     decorators = [token_required]
 
+    # TESTED
     def get(self, current_user, id):
-        if not current_user.id == id:    
+        if not current_user.id == id and not current_user.is_admin:    
             abort(401, error='Unauthorized', message='User is unauthorized to perform this action')
-        visited_locations = current_user.visited_locations().all()
-        return marshal(visited_locations, visited_fields), 200
+        user = User.query.get(id)
+        if not user:
+            abort(404, error='Not found', message='Not found')
+        visited_locations = Visited.query.filter_by(user_id=id).all()
+        locations = []
+        for location in visited_locations:
+            location_data = {}
+            location_data['date_visited'] = location.date_visited.strftime('%Y-%m-%d, %H:%M:%S')
+            location_data['name'] = Location.query.get(location.location_id).location_name
+            locations.append(location_data)
+        return locations, 200
 
+
+    # TESTED
     def post(self, current_user, id):
         self.reqparse = reqparse.RequestParser()
         self.reqparse.add_argument('location_id', type=int, required=True, help='ID of location to add', location='json')
+        self.reqparse.add_argument('date_visited', type=str, required=True, help='Date when location was visited', location='json')
         args = self.reqparse.parse_args()
         location_id = args['location_id']
-        if location_id is None:
-            abort(400, error='Bad request', message='Bad request')
-        if not current_user.id == id:
+        date_visited = args['date_visited']
+
+        if not current_user.id == id and not current_user.is_admin:
             abort(401, error='Unauthorized', message='User is unauthorized to perform this action')
+        
+        success = True
         try:
-            location_to_add = Location.query.get(location_id)
-            current_user.visits.append(location_to_add)
+            loc = Location.query.get(location_id)
+            user = User.query.get(id)
+            v = Visited(visited_by=user, location_visited=loc, date_visited=parser.parse(date_visited))
+            db.session.add(v)
             db.session.commit()
         except Exception as e:
             print(e)
-            abort(500, error='Internal server error', message='Something went wrong. The location may have been deleted')
+            db.session.rollback()
+            success = False
         finally:
             db.session.close()
-        return {"message": "Successfully added location to history", "error": None, "data": {"id": location_id}}, 200
+        if not success:
+            abort(500, error='Internal server error', message='Something went wrong')
+        return {"message": "Successfully added location to history", "error": None, "data": {"id": location_id}}, 201
 
 
 class VisitedAPI(Resource):
     """/users/{id}/visited/{location_id} - visited"""
     decorators = [token_required]
 
+    # TESTED
     def delete(self, current_user, id, location_id):
-        if not current_user.id == id:
+        if not current_user.id == id and not current_user.is_admin:
             abort(401, error='Unauthorized', message='User is unauthorized to perform this action')
-        location_to_remove = Location.query.get(location_id)
-        if not location_to_remove or not current_user in location_to_remove.wasvisitedby:
+        visit_to_remove = Visited.query.get(location_id)
+        if not visit_to_remove:
             abort(400, error='Bad request', message='Bad request')
+        
+        success = True
         try:
-            current_user.visits.remove(location_to_remove)
-            db.session.add(current_user)
+            db.session.delete(visit_to_remove)
             db.session.commit()
         except Exception as e:
             print(e)
-            abort(400, error='Bad request', message='Bad request')
+            db.session.rollback()
+            success = False
         finally:
             db.session.close()
-        return {"message": "Removed location successfully", "error": None, "data": {"id": location_id}}, 200
+        if not success:
+            abort(500, error='Internal server error', message='Something went wrong')
+        return {"message": "Removed location successfully", "error": None, "data": None}, 200
 
 
 class SearchLocationAPI(Resource):
     """/locations/search-by-lat-lon - search_by_text"""
+
+    # TESTED
     def get(self):
         self.reqparse = reqparse.RequestParser()
         self.reqparse.add_argument('lat', type=str, required=True, help='latitude of location to search not provided', location='args')
@@ -270,35 +325,47 @@ class LocationListAPI(Resource):
         args = self.reqparse.parse_args()
         if not args['lat'] or not args['lon'] or not args['name']:
             abort(400, error='Bad request', message='Bad request')
+        
+        success = True
         try:
             lat, lon, name = float(args['lat']), float(args['lon']), args['name']
             if Location.search_by_lat_and_lon(lat, lon).count() > 0:
                 abort(400, error='Bad request', message='Bad request')
             location = Location(latitude=lat, longitude=lon, location_name=name)
             db.session.add(location)
+            db.session.flush()
+            location_id = location.id
             db.session.commit()
         except Exception as e:
             print(e)
-            abort(400, error='Bad request', message='Bad request')
+            db.session.rollback()
+            success = False
         finally:
             db.session.close()
-        return {"message": "Location added successfully", "data": {"id": location.id}, "error": None}, 200
+        if not success:
+            abort(500, error='Internal server error', message='Something went wrong')
+        return {"message": "Location added successfully", "data": {"id": location_id}, "error": None}, 201
 
 
 class UserAPI(Resource):
     """/users/{id}/edit-profile - edit_profile"""
     decorators = [token_required]
+
+    # TESTED
     def get(self, current_user, id):
-        if not current_user.id == id:
+        if not current_user.id == id and not current_user.is_admin:
             abort(401, error='Unauthorized', message='User is unauthorized to perform this action')
         user = User.query.get(id)
         if not user:
             abort(404, error='Not found', message='Not found')
-        return {"message": "User found", "error": None, "data": marshal(user, user_fields)}
+        user_data = marshal(user, user_fields)
+        user_data['gender'] = "m" if user_data['gender'] == True else "f"
+        return {"message": "User found", "error": None, "data": user_data}
 
     
-    def put(self, current_user, id):
-        if not current_user.id == id or current_user.is_verified:
+    # TESTED
+    def patch(self, current_user, id):
+        if (not current_user.id == id or current_user.is_verified) and not current_user.is_admin:
             abort(401, error='Unauthorized', message='User is unauthorized to perform this action')
         user = User.query.get(id)
         if not user:
@@ -312,6 +379,8 @@ class UserAPI(Resource):
         self.reqparse.add_argument('username', type=str, help='Provide a valid username', location='json')
         self.reqparse.add_argument('phone_number', type=str, help='Provide a phone number', location='json')
         args = self.reqparse.parse_args()
+
+        success = True
         try:
             # the gender and dob fields need to be modified a bit before they can ...
             # ... be applied to the user object
@@ -323,23 +392,25 @@ class UserAPI(Resource):
             for key, value in args.items():
                 if value and key != 'gender' and key != 'dob':
                     user.__setattr__(key, value)
-            db.session.add(user)
+            user_id = user.id
             db.session.commit()
-            return {
-                "message": "User profile edited successfully",
-                "data": {"id": user.id},
-                "error": None
-            }, 200
         except Exception as e:
             print(e)
-            abort(500, error='Internal server error', message='Something went wrong')
+            db.session.rollback()
+            success = False
         finally:
             db.session.close()
+        if not success:
+            abort(500, error='Internal server error', message='Something went wrong')
+        return {"message": "User profile edited successfully", "data": {"id": user_id}, "error": None }, 200
 
 
 class SearchUserAPI(Resource):
     """/users/search - search_users"""
+
+    # TESTED
     def get(self):
+        success = True
         try:
             self.reqparse = reqparse.RequestParser()
             self.reqparse.add_argument('q', type=str, required=True, help='Type in a name or username of a user to search', location='args')
@@ -347,17 +418,23 @@ class SearchUserAPI(Resource):
             user_details = args['q']
             found_users, total = User.search(user_details, 1, current_app.config['USERS_PER_PAGE'])
             found_users = found_users.all()
-            if total > 0:
-                return {"message": "Users found", "error": None, "data": {"count": total, "users": marshal(found_users, user_fields_min)}}, 200
-            return {"message": "No users found", "error": None, "data": {"count": total, "users": []}}, 200
         except Exception as e:
-            abort(400, error='Bad request', message='Bad request')
+            print(e)
+            success = False
         finally:
             db.session.close()
+        if not success:
+            abort(400, error='Bad request', message='Bad request')
+        if total > 0:
+                return {"message": "Users found", "error": None, "data": {"count": total, "users": marshal(found_users, user_fields_min)}}, 200
+        return {"message": "No users found", "error": None, "data": {"count": total, "users": []}}, 200
 
 class SearchTestingCenterAPI(Resource):
     """/testing-centers/search - search_testing_centers"""
+
+    # TESTED
     def get(self):
+        success = True
         try:
             self.reqparse = reqparse.RequestParser()
             self.reqparse.add_argument('q', type=str, required=True, help='Type in the name of the testing center to search', location='args')
@@ -365,13 +442,16 @@ class SearchTestingCenterAPI(Resource):
             testing_center_details = args['q']
             found_testing_centers, total = TestingCenter.search(testing_center_details, 1, current_app.config['USERS_PER_PAGE'])
             found_testing_centers = found_testing_centers.all()
-            if total > 0:
-                return {"message": "Testing centers found", "error": None, "data": {"count": total, "testing_centers": marshal(found_testing_centers, testing_center_fields)}}, 200
-            return {"message": "No testing centers found", "error": None, "data": {"count": total, "testing_centers": []}}, 200
         except Exception as e:
-            abort(400, error='Bad request', message='Bad request')
+            print(e)
+            success = False
         finally:
             db.session.close()
+        if not success:
+            abort(400, error='Bad request', message='Bad request')
+        if total > 0:
+            return {"message": "Testing centers found", "error": None, "data": {"count": total, "testing_centers": marshal(found_testing_centers, testing_center_fields)}}, 200
+        return {"message": "No testing centers found", "error": None, "data": {"count": total, "testing_centers": []}}, 200
 
 api.add_resource(ContactListAPI, '/users/<int:id>/contacts', endpoint='contacts_list')
 api.add_resource(ContactAPI, '/users/<int:id>/contacts/<int:contact_id>', endpoint='contact')
