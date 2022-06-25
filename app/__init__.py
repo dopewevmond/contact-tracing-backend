@@ -24,6 +24,9 @@ def create_app(config_class=Config):
     migrate.init_app(app, db)
     swagger.init_app(app)
     mail.init_app(app)
+
+    with app.app_context():
+        db.create_all()
     
     from app.main import bp as main_bp
     from app.auth import bp as auth_bp
